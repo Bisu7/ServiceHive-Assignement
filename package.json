@@ -1,0 +1,28 @@
+{
+  "name": "leadflow",
+  "version": "1.0.0",
+  "private": true,
+  "description": "LeadFlow — a full-stack lead management platform built with the MERN stack",
+  "author": "LeadFlow Team",
+  "license": "MIT",
+  "engines": {
+    "node": ">=20.0.0",
+    "pnpm": ">=9.0.0"
+  },
+  "scripts": {
+    "dev": "pnpm --parallel --filter @leadflow/backend --filter @leadflow/frontend run dev",
+    "build": "pnpm --filter @leadflow/shared run build && pnpm --parallel --filter @leadflow/backend --filter @leadflow/frontend run build",
+    "lint": "pnpm --recursive run lint",
+    "format": "prettier --write \"**/*.{ts,tsx,json,md}\" --ignore-path .gitignore",
+    "format:check": "prettier --check \"**/*.{ts,tsx,json,md}\" --ignore-path .gitignore",
+    "type-check": "pnpm --filter @leadflow/shared run type-check && pnpm --parallel --filter @leadflow/backend --filter @leadflow/frontend run type-check",
+    "clean": "pnpm --recursive exec rm -rf dist node_modules/.cache"
+  },
+  "devDependencies": {
+    "@typescript-eslint/eslint-plugin": "^7.18.0",
+    "@typescript-eslint/parser": "^7.18.0",
+    "eslint": "^8.57.0",
+    "prettier": "^3.3.3",
+    "typescript": "^5.5.4"
+  }
+}

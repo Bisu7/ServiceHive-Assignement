@@ -3,9 +3,6 @@ import bcrypt from 'bcryptjs'
 import { env } from '../../config/env'
 import type { UserRole } from '@leadflow/shared'
 
-/**
- * Interface representing a User document in MongoDB.
- */
 export interface IUserDocument extends Document {
   name: string
   email: string
@@ -16,9 +13,6 @@ export interface IUserDocument extends Document {
   comparePassword(candidate: string): Promise<boolean>
 }
 
-/**
- * Interface for the User static methods.
- */
 interface IUserModel extends Model<IUserDocument> {
   findByEmail(email: string): Promise<IUserDocument | null>
 }
@@ -63,8 +57,6 @@ const userSchema = new Schema<IUserDocument>(
  * Hash password before saving if it has been modified.
  */
 userSchema.pre('save', async function (next) {
-  // Cast this to any or IUserDocument to access password
-  const user = this as any
   if (!user.isModified('password')) return next()
 
   try {
@@ -76,18 +68,12 @@ userSchema.pre('save', async function (next) {
   }
 })
 
-/**
- * Compares a candidate password with the stored hash.
- */
 userSchema.methods.comparePassword = async function (candidate: string): Promise<boolean> {
   // Cast this to any to access the password field which might be hidden by select: false
   const user = this as any
   return bcrypt.compare(candidate, user.password || '')
 }
 
-/**
- * Static method to find a user by email and explicitly select the password field.
- */
 userSchema.statics.findByEmail = function (email: string) {
   return this.findOne({ email }).select('+password')
 }

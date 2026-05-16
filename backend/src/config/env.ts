@@ -2,7 +2,6 @@ import { z } from 'zod'
 import dotenv from 'dotenv'
 import path from 'path'
 
-// Load environment variables from .env file
 dotenv.config({ path: path.join(__dirname, '../../.env') })
 
 const envSchema = z.object({
@@ -12,7 +11,7 @@ const envSchema = z.object({
   JWT_EXPIRES_IN: z.string().default('7d'),
   BCRYPT_SALT_ROUNDS: z.string().transform(Number).default('12'),
   NODE_ENV: z.enum(['development', 'production', 'test']).default('development'),
-  CLIENT_ORIGIN: z.string().url(), // Changed from CLIENT_URL to match common naming or user preference
+  CLIENT_ORIGIN: z.string().url(),
 })
 
 const result = envSchema.safeParse(process.env)

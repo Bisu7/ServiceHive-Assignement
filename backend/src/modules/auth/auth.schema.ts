@@ -1,8 +1,5 @@
 import { z } from 'zod'
 
-/**
- * Zod schema for user registration requests.
- */
 export const registerSchema = z.object({
   name: z.string().min(2, 'Name must be at least 2 characters').max(50, 'Name cannot exceed 50 characters'),
   email: z.string().email('Invalid email address'),
@@ -14,9 +11,6 @@ export const registerSchema = z.object({
   role: z.enum(['admin', 'sales']).optional(),
 })
 
-/**
- * Zod schema for login requests.
- */
 export const loginSchema = z.object({
   email: z.string().email('Invalid email address'),
   password: z.string().min(1, 'Password is required'),

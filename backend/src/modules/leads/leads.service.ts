@@ -3,13 +3,7 @@ import { ApiError } from '../../utils/ApiError'
 import type { CreateLeadInput, UpdateLeadInput, LeadFiltersInput } from './leads.schema'
 import type { PaginatedResponse, ILead } from '@leadflow/shared'
 
-/**
- * Leads service — all database operations and business rules for the Lead domain.
- * Returns plain objects (via .lean()) rather than Mongoose documents for performance.
- */
-
-/** Fetches a paginated, filtered list of leads */
-export async function getLeads(filters: LeadFiltersInput): Promise<PaginatedResponse<ILead>> {
+export async function getLeads(filters: LeadFiltersInput) {
   const { page, limit, status, source, search } = filters
   const skip = (page - 1) * limit
 
@@ -27,10 +21,7 @@ export async function getLeads(filters: LeadFiltersInput): Promise<PaginatedResp
   const totalPages = Math.ceil(total / limit)
 
   return {
-    success: true,
-    message: 'Leads retrieved successfully',
-    data: leads as unknown as ILead[],
-    timestamp: new Date().toISOString(),
+    leads: leads as unknown as ILead[],
     pagination: {
       page,
       limit,
@@ -42,20 +33,17 @@ export async function getLeads(filters: LeadFiltersInput): Promise<PaginatedResp
   }
 }
 
-/** Retrieves a single lead by ID or throws 404 */
 export async function getLeadById(id: string): Promise<ILead> {
   const lead = await LeadModel.findById(id).lean()
   if (!lead) throw ApiError.notFound(`Lead with id '${id}' not found`)
   return lead as unknown as ILead
 }
 
-/** Creates a new lead record */
 export async function createLead(input: CreateLeadInput): Promise<ILead> {
   const lead = await LeadModel.create(input)
   return lead.toJSON() as unknown as ILead
 }
 
-/** Applies a partial update to an existing lead */
 export async function updateLead(id: string, input: UpdateLeadInput): Promise<ILead> {
   const lead = await LeadModel.findByIdAndUpdate(id, input, {
     new: true, // Return the updated document
@@ -66,7 +54,6 @@ export async function updateLead(id: string, input: UpdateLeadInput): Promise<IL
   return lead as unknown as ILead
 }
 
-/** Permanently deletes a lead */
 export async function deleteLead(id: string): Promise<void> {
   const result = await LeadModel.findByIdAndDelete(id)
   if (!result) throw ApiError.notFound(`Lead with id '${id}' not found`)

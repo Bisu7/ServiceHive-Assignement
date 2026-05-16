@@ -5,14 +5,7 @@ import { ApiResponse } from '../../utils/ApiResponse'
 import { User } from '../users/user.model'
 import { ApiError } from '../../utils/ApiError'
 
-/**
- * Controller handling authentication-related HTTP requests.
- */
 export class AuthController {
-  /**
-   * Registers a new user account.
-   * POST /api/auth/register
-   */
   static register = asyncHandler(async (req: Request, res: Response) => {
     const result = await AuthService.register(req.body)
     
@@ -21,10 +14,6 @@ export class AuthController {
     )
   })
 
-  /**
-   * Logs into an existing user account.
-   * POST /api/auth/login
-   */
   static login = asyncHandler(async (req: Request, res: Response) => {
     const result = await AuthService.login(req.body)
     
@@ -33,10 +22,6 @@ export class AuthController {
     )
   })
 
-  /**
-   * Returns the current authenticated user's profile.
-   * GET /api/auth/me
-   */
   static getMe = asyncHandler(async (req: Request, res: Response) => {
     const user = await User.findById(req.user.id)
     if (!user) {
@@ -48,10 +33,6 @@ export class AuthController {
     )
   })
 
-  /**
-   * Logs out the current user.
-   * POST /api/auth/logout
-   */
   static logout = asyncHandler(async (_req: Request, res: Response) => {
     // In a stateless JWT system, logout is primarily handled on the client by deleting the token.
     // This endpoint is kept for consistency and future cookie-clearing if added.

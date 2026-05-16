@@ -3,11 +3,6 @@ import { ApiError } from '../utils/ApiError'
 import { env } from '../config/env'
 import { logger } from '../utils/logger'
 
-/**
- * Global error handling middleware.
- * Formats all errors into a consistent ApiResponse JSON structure.
- * Handles specific Mongoose, Zod, and JWT errors automatically.
- */
 export const errorMiddleware = (
   err: any, // Using any here because Express error middleware is broad, but we handle specific types
   req: Request,

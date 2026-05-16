@@ -2,10 +2,6 @@ import mongoose from 'mongoose'
 import { env } from './env'
 import { logger } from '../utils/logger'
 
-/**
- * Connects to the MongoDB database with retry logic.
- * Attempts 3 connections with a 2-second delay between each.
- */
 export async function connectDB(): Promise<void> {
   const maxAttempts = 3
   let attempts = 0

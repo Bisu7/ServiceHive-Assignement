@@ -1,27 +1,34 @@
-import type { Response } from 'express'
-import type { ApiResponse } from '@leadflow/shared'
-
 /**
- * Builds and sends a consistent JSON response envelope.
- * Controllers should use this instead of calling res.json() directly
- * to guarantee response shape uniformity.
+ * Consistent JSON response envelope for all successful API calls.
+ * @template T The type of the data payload.
  */
-export function sendSuccess<T>(
-  res: Response,
-  data: T,
-  message = 'Success',
-  statusCode = 200
-): void {
-  const response: ApiResponse<T> = {
-    success: true,
-    message,
-    data,
-    timestamp: new Date().toISOString(),
-  }
-  res.status(statusCode).json(response)
-}
+export class ApiResponse<T> {
+  public readonly success: boolean
+  public readonly message: string
+  public readonly data: T
+  public readonly timestamp: string
+  public readonly meta?: Record<string, unknown>
 
-/** Convenience wrapper for 201 Created responses */
-export function sendCreated<T>(res: Response, data: T, message = 'Created'): void {
-  sendSuccess(res, data, message, 201)
+  constructor(success: boolean, message: string, data: T, meta?: Record<string, unknown>) {
+    this.success = success
+    this.message = message
+    this.data = data
+    this.timestamp = new Date().toISOString()
+    this.meta = meta
+  }
+
+  /** 200 — OK */
+  static ok<T>(data: T, message = 'Success'): ApiResponse<T> {
+    return new ApiResponse(true, message, data)
+  }
+
+  /** 201 — Created */
+  static created<T>(data: T, message = 'Resource created successfully'): ApiResponse<T> {
+    return new ApiResponse(true, message, data)
+  }
+
+  /** 200 — Paginated OK */
+  static paginated<T>(data: T, meta: Record<string, unknown>, message = 'Success'): ApiResponse<T> {
+    return new ApiResponse(true, message, data, meta)
+  }
 }

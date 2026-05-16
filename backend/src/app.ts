@@ -1,47 +1,48 @@
-import express, { type Application } from 'express'
-import cors from 'cors'
+import express, { Application, Request, Response, NextFunction } from 'express'
 import helmet from 'helmet'
-import { globalRateLimit } from './middleware/rateLimit.middleware'
-import { errorMiddleware, notFoundMiddleware } from './middleware/error.middleware'
-import { authRouter } from './modules/auth/auth.routes'
-import { leadsRouter } from './modules/leads/leads.routes'
+import cors from 'cors'
 import { env } from './config/env'
+import { authRouter } from './modules/auth/auth.routes'
+import { errorMiddleware } from './middleware/error.middleware'
+import { apiLimiter } from './middleware/rateLimit.middleware'
+import { ApiError } from './utils/ApiError'
 
-/** Configured Express application — exported without listening for testability */
+/**
+ * Configure the Express application.
+ * Integrates security headers, CORS, rate limiting, and core routes.
+ */
 const app: Application = express()
 
-// ── Security headers ─────────────────────────────────────────────────────────
+// 1. GLOBAL SECURITY MIDDLEWARE
 app.use(helmet())
-
-// ── CORS — restrict to the configured client origin ──────────────────────────
 app.use(
   cors({
     origin: env.CLIENT_ORIGIN,
     credentials: true,
-    methods: ['GET', 'POST', 'PATCH', 'DELETE', 'OPTIONS'],
   })
 )
 
-// ── Global rate limiting ──────────────────────────────────────────────────────
-app.use(globalRateLimit)
-
-// ── Body parsers ──────────────────────────────────────────────────────────────
+// 2. PARSING MIDDLEWARE
 app.use(express.json({ limit: '10kb' }))
 app.use(express.urlencoded({ extended: true, limit: '10kb' }))
 
-// ── Health check — lightweight endpoint for load balancers ────────────────────
+// 3. GLOBAL RATE LIMITING
+app.use('/api', apiLimiter)
+
+// 4. ROUTES
+app.use('/api/auth', authRouter)
+
+// Health check endpoint
 app.get('/health', (_req, res) => {
-  res.status(200).json({ status: 'ok', service: 'leadflow-api', timestamp: new Date().toISOString() })
+  res.status(200).json({ status: 'UP', timestamp: new Date().toISOString() })
 })
 
-// ── API routes ────────────────────────────────────────────────────────────────
-app.use('/api/auth', authRouter)
-app.use('/api/leads', leadsRouter)
+// 5. 404 HANDLER
+app.all('*', (req: Request, _res: Response, next: NextFunction) => {
+  next(ApiError.notFound(`Route ${req.originalUrl} not found on this server`))
+})
 
-// ── 404 handler — must be after all routes ────────────────────────────────────
-app.use(notFoundMiddleware)
-
-// ── Global error handler — must be the last middleware ────────────────────────
+// 6. GLOBAL ERROR HANDLER
 app.use(errorMiddleware)
 
 export { app }

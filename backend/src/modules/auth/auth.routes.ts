@@ -1,17 +1,41 @@
-import { Router, type IRouter } from 'express'
-import { authController } from './auth.controller'
+import { Router } from 'express'
+import { AuthController } from './auth.controller'
 import { validate } from '../../middleware/validate.middleware'
-import { authenticate } from '../../middleware/auth.middleware'
-import { authRateLimit } from '../../middleware/rateLimit.middleware'
 import { registerSchema, loginSchema } from './auth.schema'
+import { protect } from '../../middleware/auth.middleware'
+import { authLimiter } from '../../middleware/rateLimit.middleware'
 
-const router: IRouter = Router()
+const router = Router()
 
-/** Rate limit auth routes to mitigate brute-force attacks */
-router.use(authRateLimit)
+// Apply auth rate limiting to all auth routes
+router.use(authLimiter)
 
-router.post('/register', validate(registerSchema), authController.register)
-router.post('/login', validate(loginSchema), authController.login)
-router.get('/me', authenticate, authController.me)
+/**
+ * @route POST /api/auth/register
+ * @desc Register a new user
+ * @access Public
+ */
+router.post('/register', validate(registerSchema), AuthController.register)
 
-export { router as authRouter }
+/**
+ * @route POST /api/auth/login
+ * @desc Authenticate user & get token
+ * @access Public
+ */
+router.post('/login', validate(loginSchema), AuthController.login)
+
+/**
+ * @route GET /api/auth/me
+ * @desc Get current user profile
+ * @access Private
+ */
+router.get('/me', protect, AuthController.getMe)
+
+/**
+ * @route POST /api/auth/logout
+ * @desc Logout current user
+ * @access Private
+ */
+router.post('/logout', protect, AuthController.logout)
+
+export const authRouter = router

@@ -1,45 +1,50 @@
-import type { Request, Response, NextFunction } from 'express'
+import { Request, Response, NextFunction } from 'express'
 import { ApiError } from '../utils/ApiError'
-import { logger } from '../utils/logger'
 import { env } from '../config/env'
+import { logger } from '../utils/logger'
 
 /**
- * Global error-handling middleware. Must be registered LAST in the Express
- * middleware chain (after all routes). Normalises ApiError and unexpected
- * errors into the shared ApiErrorResponse shape.
+ * Global error handling middleware.
+ * Formats all errors into a consistent ApiResponse JSON structure.
+ * Handles specific Mongoose, Zod, and JWT errors automatically.
  */
-export function errorMiddleware(
-  err: unknown,
-  _req: Request,
+export const errorMiddleware = (
+  err: any, // Using any here because Express error middleware is broad, but we handle specific types
+  req: Request,
   res: Response,
-  // next is required by Express's signature even when unused
-  _next: NextFunction
-): void {
-  if (err instanceof ApiError) {
-    res.status(err.statusCode).json({
-      success: false,
-      message: err.message,
-      data: null,
-      statusCode: err.statusCode,
-      errors: err.errors,
-      timestamp: new Date().toISOString(),
-    })
-    return
+  next: NextFunction
+) => {
+  let error = err
+
+  // Convert non-ApiError instances to ApiError
+  if (!(error instanceof ApiError)) {
+    const statusCode = error.statusCode || (error.name === 'ValidationError' ? 400 : 500)
+    const message = error.message || 'Something went wrong'
+    
+    // Handle specific MongoDB/Mongoose errors
+    if (err.code === 11000) {
+      const field = Object.keys(err.keyValue)[0]
+      error = ApiError.conflict(`Duplicate value for field: ${field}`)
+    } else if (err.name === 'CastError') {
+      error = ApiError.notFound(`Resource not found with id: ${err.value}`)
+    } else {
+      error = new ApiError(statusCode, message, false, undefined, err.stack)
+    }
   }
 
-  // Unexpected error — log full details server-side but hide internals from client
-  logger.error('Unhandled error:', err)
-
-  res.status(500).json({
+  const response = {
     success: false,
-    message: env.NODE_ENV === 'production' ? 'Internal server error' : String(err),
+    message: error.message,
     data: null,
-    statusCode: 500,
     timestamp: new Date().toISOString(),
-  })
-}
+    ...(error.errors && { errors: error.errors }),
+    ...(env.NODE_ENV === 'development' && { stack: error.stack }),
+  }
 
-/** Handles requests that match no registered route */
-export function notFoundMiddleware(_req: Request, _res: Response, next: NextFunction): void {
-  next(ApiError.notFound('Route not found'))
+  // Log error for internal tracking
+  if (!error.isOperational) {
+    logger.error(`[${req.method}] ${req.path} >> ${error.message}`, error)
+  }
+
+  res.status(error.statusCode || 500).json(response)
 }

@@ -1,44 +1,62 @@
-import type { Request, Response, RequestHandler } from 'express'
+import { Request, Response } from 'express'
+import { AuthService } from './auth.service'
 import { asyncHandler } from '../../utils/asyncHandler'
-import { sendSuccess, sendCreated } from '../../utils/ApiResponse'
-import { registerUser, loginUser } from './auth.service'
-import type { RegisterInput, LoginInput } from './auth.schema'
-
-/** Strongly-typed shape for the auth controller object */
-interface AuthController {
-  register: RequestHandler
-  login: RequestHandler
-  me: RequestHandler
-}
+import { ApiResponse } from '../../utils/ApiResponse'
+import { User } from '../users/user.model'
+import { ApiError } from '../../utils/ApiError'
 
 /**
- * Auth controller — thin layer that delegates to the auth service and
- * formats HTTP responses. No business logic should live here.
+ * Controller handling authentication-related HTTP requests.
  */
-export const authController: AuthController = {
+export class AuthController {
   /**
+   * Registers a new user account.
    * POST /api/auth/register
-   * Creates a new user account and returns a JWT.
    */
-  register: asyncHandler(async (req: Request, res: Response): Promise<void> => {
-    const result = await registerUser(req.body as RegisterInput)
-    sendCreated(res, result, 'Account created successfully')
-  }),
+  static register = asyncHandler(async (req: Request, res: Response) => {
+    const result = await AuthService.register(req.body)
+    
+    return res.status(201).json(
+      ApiResponse.created(result, 'Account created successfully')
+    )
+  })
 
   /**
+   * Logs into an existing user account.
    * POST /api/auth/login
-   * Authenticates credentials and returns a JWT.
    */
-  login: asyncHandler(async (req: Request, res: Response): Promise<void> => {
-    const result = await loginUser(req.body as LoginInput)
-    sendSuccess(res, result, 'Login successful')
-  }),
+  static login = asyncHandler(async (req: Request, res: Response) => {
+    const result = await AuthService.login(req.body)
+    
+    return res.status(200).json(
+      ApiResponse.ok(result, 'Logged in successfully')
+    )
+  })
 
   /**
+   * Returns the current authenticated user's profile.
    * GET /api/auth/me
-   * Returns the currently authenticated user (token already verified by middleware).
    */
-  me: asyncHandler(async (req: Request, res: Response): Promise<void> => {
-    sendSuccess(res, req.user, 'Authenticated user retrieved')
-  }),
+  static getMe = asyncHandler(async (req: Request, res: Response) => {
+    const user = await User.findById(req.user.id)
+    if (!user) {
+      throw ApiError.notFound('User profile not found')
+    }
+
+    return res.status(200).json(
+      ApiResponse.ok(user, 'User profile retrieved')
+    )
+  })
+
+  /**
+   * Logs out the current user.
+   * POST /api/auth/logout
+   */
+  static logout = asyncHandler(async (_req: Request, res: Response) => {
+    // In a stateless JWT system, logout is primarily handled on the client by deleting the token.
+    // This endpoint is kept for consistency and future cookie-clearing if added.
+    return res.status(200).json(
+      ApiResponse.ok(null, 'Logged out successfully')
+    )
+  })
 }

@@ -1,23 +1,26 @@
-import mongoose, { type Document, Schema } from 'mongoose'
+import mongoose, { Schema, Document, Model } from 'mongoose'
 import bcrypt from 'bcryptjs'
-import { UserRole } from '@leadflow/shared'
 import { env } from '../../config/env'
+import type { UserRole } from '@leadflow/shared'
 
 /**
- * Mongoose document shape for a User.
- * Extends IUser (from shared) with the password hash field and a helper method.
- * The password is never returned in API responses — enforce via .select('-passwordHash').
+ * Interface representing a User document in MongoDB.
  */
 export interface IUserDocument extends Document {
   name: string
   email: string
-  passwordHash: string
+  password?: string
   role: UserRole
-  isVerified: boolean
   createdAt: Date
   updatedAt: Date
-  /** Compares a plain-text candidate against the stored bcrypt hash */
   comparePassword(candidate: string): Promise<boolean>
+}
+
+/**
+ * Interface for the User static methods.
+ */
+interface IUserModel extends Model<IUserDocument> {
+  findByEmail(email: string): Promise<IUserDocument | null>
 }
 
 const userSchema = new Schema<IUserDocument>(
@@ -26,7 +29,8 @@ const userSchema = new Schema<IUserDocument>(
       type: String,
       required: [true, 'Name is required'],
       trim: true,
-      maxlength: [100, 'Name cannot exceed 100 characters'],
+      minlength: [2, 'Name must be at least 2 characters'],
+      maxlength: [50, 'Name cannot exceed 50 characters'],
     },
     email: {
       type: String,
@@ -34,50 +38,58 @@ const userSchema = new Schema<IUserDocument>(
       unique: true,
       lowercase: true,
       trim: true,
-      match: [/^\S+@\S+\.\S+$/, 'Please provide a valid email'],
+      match: [/^\S+@\S+\.\S+$/, 'Please provide a valid email address'],
     },
-    passwordHash: {
+    password: {
       type: String,
       required: [true, 'Password is required'],
-      minlength: [6, 'Password must be at least 6 characters'],
-      select: false, // Excluded from query results by default
+      minlength: [8, 'Password must be at least 8 characters'],
+      select: false,
     },
     role: {
       type: String,
-      enum: Object.values(UserRole),
-      default: UserRole.Sales,
-    },
-    isVerified: {
-      type: Boolean,
-      default: false,
+      enum: ['admin', 'sales'],
+      default: 'sales' as UserRole,
     },
   },
   {
     timestamps: true,
-    // Never expose the password hash in serialized output
-    toJSON: {
-      transform(_doc, ret) {
-        // Assign undefined rather than delete to satisfy exactOptionalPropertyTypes
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-        ;(ret as Record<string, unknown>)['passwordHash'] = undefined
-        return ret
-      },
-    },
+    versionKey: false,
+    strict: true,
   }
 )
 
-/** Hash the password before saving if it has been modified */
+/**
+ * Hash password before saving if it has been modified.
+ */
 userSchema.pre('save', async function (next) {
-  if (!this.isModified('passwordHash')) return next()
-  this.passwordHash = await bcrypt.hash(this.passwordHash, env.BCRYPT_SALT_ROUNDS)
-  next()
+  // Cast this to any or IUserDocument to access password
+  const user = this as any
+  if (!user.isModified('password')) return next()
+
+  try {
+    const salt = await bcrypt.genSalt(env.BCRYPT_SALT_ROUNDS)
+    user.password = await bcrypt.hash(user.password as string, salt)
+    next()
+  } catch (error) {
+    next(error as Error)
+  }
 })
 
-userSchema.methods['comparePassword'] = async function (
-  this: IUserDocument,
-  candidate: string
-): Promise<boolean> {
-  return bcrypt.compare(candidate, this.passwordHash)
+/**
+ * Compares a candidate password with the stored hash.
+ */
+userSchema.methods.comparePassword = async function (candidate: string): Promise<boolean> {
+  // Cast this to any to access the password field which might be hidden by select: false
+  const user = this as any
+  return bcrypt.compare(candidate, user.password || '')
 }
 
-export const UserModel = mongoose.model<IUserDocument>('User', userSchema)
+/**
+ * Static method to find a user by email and explicitly select the password field.
+ */
+userSchema.statics.findByEmail = function (email: string) {
+  return this.findOne({ email }).select('+password')
+}
+
+export const User = mongoose.model<IUserDocument, IUserModel>('User', userSchema)

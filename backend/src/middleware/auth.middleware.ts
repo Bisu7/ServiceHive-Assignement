@@ -1,55 +1,57 @@
-import type { Request, Response, NextFunction } from 'express'
-import jwt from 'jsonwebtoken'
+import { Request, Response, NextFunction } from 'express'
+import { AuthService } from '../modules/auth/auth.service'
 import { ApiError } from '../utils/ApiError'
-import { env } from '../config/env'
+import { User } from '../modules/users/user.model'
+import { asyncHandler } from '../utils/asyncHandler'
 import type { UserRole } from '@leadflow/shared'
 
-/** Shape of the JWT payload we sign at login */
-interface JwtPayload {
-  userId: string
-  role: UserRole
-  iat: number
-  exp: number
-}
-
 /**
- * Verifies the Bearer token from the Authorization header and attaches
- * the decoded payload to req.user for downstream handlers.
+ * Middleware to protect routes and ensure the user is authenticated.
+ * Extracts the Bearer token, verifies it, and attaches the user payload to req.user.
+ * @throws {ApiError} 401 if token is missing, invalid, or user no longer exists.
  */
-export function authenticate(req: Request, _res: Response, next: NextFunction): void {
-  const authHeader = req.headers.authorization
+export const protect = asyncHandler(async (req: Request, _res: Response, next: NextFunction) => {
+  let token: string | undefined
 
-  if (!authHeader?.startsWith('Bearer ')) {
-    return next(ApiError.unauthorized('Missing or malformed Authorization header'))
+  if (req.headers.authorization?.startsWith('Bearer')) {
+    token = req.headers.authorization.split(' ')[1]
   }
 
-  const token = authHeader.slice(7)
-
-  try {
-    const payload = jwt.verify(token, env.JWT_SECRET) as JwtPayload
-    req.user = { userId: payload.userId, role: payload.role }
-    next()
-  } catch {
-    next(ApiError.unauthorized('Token is invalid or expired'))
+  if (!token) {
+    throw ApiError.unauthorized('Not authorized to access this route. Please log in.')
   }
-}
+
+  // Verify token
+  const decoded = AuthService.verifyToken(token)
+
+  // Check if user still exists
+  const currentUser = await User.findById(decoded.id)
+  if (!currentUser) {
+    throw ApiError.unauthorized('The user belonging to this token no longer exists.')
+  }
+
+  // Grant access to protected route
+  req.user = {
+    id: currentUser.id,
+    role: currentUser.role as UserRole,
+  }
+  
+  next()
+})
 
 /**
- * Role-based access control guard. Must be used after authenticate().
- * Accepts a list of roles that are permitted to proceed.
+ * Middleware factory to restrict access to specific user roles.
+ * Must be used AFTER the protect middleware.
+ * @param roles Array of allowed UserRoles.
+ * @throws {ApiError} 403 if the user's role is not included in the allowed roles.
  */
-export function authorize(
-  ...allowedRoles: UserRole[]
-): (req: Request, res: Response, next: NextFunction) => void {
-  return (req: Request, _res: Response, next: NextFunction): void => {
-    if (!req.user) {
-      return next(ApiError.unauthorized())
+export const restrictTo = (...roles: UserRole[]) => {
+  return (req: Request, _res: Response, next: NextFunction) => {
+    if (!roles.includes(req.user.role)) {
+      return next(
+        ApiError.forbidden('You do not have permission to perform this action')
+      )
     }
-
-    if (!allowedRoles.includes(req.user.role)) {
-      return next(ApiError.forbidden('You do not have permission to perform this action'))
-    }
-
     next()
   }
 }

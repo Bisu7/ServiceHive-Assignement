@@ -1,61 +1,74 @@
 import jwt from 'jsonwebtoken'
-import { ApiError } from '../../utils/ApiError'
+import { User } from '../users/user.model'
 import { env } from '../../config/env'
-import { UserModel } from '../users/user.model'
+import { ApiError } from '../../utils/ApiError'
 import type { RegisterInput, LoginInput } from './auth.schema'
-import type { AuthResponse, IUser } from '@leadflow/shared'
 
 /**
- * Auth service — contains all business logic for registration and login.
- * Controllers call these methods and only handle HTTP concerns (status, response).
+ * Service handling core authentication logic.
  */
+export class AuthService {
+  /**
+   * Registers a new user and generates an authentication token.
+   * @throws {ApiError} 409 if email is already taken.
+   */
+  static async register(data: RegisterInput) {
+    const existingUser = await User.findOne({ email: data.email })
+    if (existingUser) {
+      throw ApiError.conflict('A user with this email already exists')
+    }
 
-/** Registers a new user and returns a signed JWT alongside the public user object */
-export async function registerUser(input: RegisterInput): Promise<AuthResponse> {
-  const existing = await UserModel.findOne({ email: input.email })
-  if (existing) {
-    throw ApiError.conflict('An account with this email already exists')
+    const user = await User.create(data)
+    
+    // Remove password from returned object
+    const userObj = user.toObject()
+    delete userObj.password
+
+    const token = this.generateToken(user.id, user.role)
+    return { user: userObj, token }
   }
 
-  const user = await UserModel.create({
-    name: input.name,
-    email: input.email,
-    passwordHash: input.password, // Pre-save hook handles hashing
-    role: input.role,
-  })
+  /**
+   * Authenticates a user and generates a token.
+   * @throws {ApiError} 401 if credentials are invalid.
+   */
+  static async login(data: LoginInput) {
+    const user = await User.findByEmail(data.email)
+    if (!user) {
+      throw ApiError.unauthorized('Invalid email or password')
+    }
 
-  const token = signToken(user.id as string, user.role)
-  // Mongoose serialises _id as string via toJSON — cast through unknown is intentional
-  const publicUser = user.toJSON() as unknown as IUser
+    const isMatch = await user.comparePassword(data.password)
+    if (!isMatch) {
+      throw ApiError.unauthorized('Invalid email or password')
+    }
 
-  return { token, user: publicUser }
-}
+    const token = this.generateToken(user.id, user.role)
+    
+    const userObj = user.toObject()
+    delete userObj.password
 
-/** Validates credentials and returns a signed JWT on success */
-export async function loginUser(input: LoginInput): Promise<AuthResponse> {
-  // Explicitly select passwordHash since it's excluded by default
-  const user = await UserModel.findOne({ email: input.email }).select('+passwordHash')
-
-  if (!user) {
-    // Use the same message for missing user and wrong password to prevent enumeration
-    throw ApiError.unauthorized('Invalid email or password')
+    return { user: userObj, token }
   }
 
-  const isMatch = await user.comparePassword(input.password)
-  if (!isMatch) {
-    throw ApiError.unauthorized('Invalid email or password')
+  /**
+   * Generates a signed JWT for the user.
+   */
+  static generateToken(userId: string, role: string): string {
+    return jwt.sign({ id: userId, role }, env.JWT_SECRET, {
+      expiresIn: env.JWT_EXPIRES_IN as any,
+    })
   }
 
-  const token = signToken(user.id as string, user.role)
-  // Mongoose serialises _id as string via toJSON — cast through unknown is intentional
-  const publicUser = user.toJSON() as unknown as IUser
-
-  return { token, user: publicUser }
-}
-
-/** Creates a signed JWT for the given user */
-function signToken(userId: string, role: string): string {
-  return jwt.sign({ userId, role }, env.JWT_SECRET, {
-    expiresIn: env.JWT_EXPIRES_IN,
-  } as jwt.SignOptions)
+  /**
+   * Verifies a JWT and returns the decoded payload.
+   * @throws {ApiError} 401 if token is invalid or expired.
+   */
+  static verifyToken(token: string): { id: string; role: string } {
+    try {
+      return jwt.verify(token, env.JWT_SECRET) as { id: string; role: string }
+    } catch (error) {
+      throw ApiError.unauthorized('Invalid or expired authentication token')
+    }
+  }
 }

@@ -50,9 +50,9 @@ export function LoginForm() {
       <Button type="submit" isLoading={isLoading} className="mt-2 w-full">
         Sign in
       </Button>
-      <p className="text-center text-sm text-slate-400">
+      <p className="text-center text-sm text-slate-500 dark:text-zinc-500">
         Don&apos;t have an account?{' '}
-        <Link to="/register" className="font-medium text-brand-400 hover:text-brand-300">
+        <Link to="/register" className="font-bold text-brand-600 hover:text-brand-700 dark:text-brand-400">
           Create one
         </Link>
       </p>

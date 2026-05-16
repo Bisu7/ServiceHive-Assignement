@@ -1,13 +1,13 @@
 import { Router, type IRouter } from 'express'
 import { leadsController } from './leads.controller'
 import { validate } from '../../middleware/validate.middleware'
-import { authenticate } from '../../middleware/auth.middleware'
+import { protect } from '../../middleware/auth.middleware'
 import { createLeadSchema, updateLeadSchema } from './leads.schema'
 
 const router: IRouter = Router()
 
 /** All leads routes require authentication */
-router.use(authenticate)
+router.use(protect)
 
 router.get('/', leadsController.getAll)
 router.post('/', validate(createLeadSchema), leadsController.create)

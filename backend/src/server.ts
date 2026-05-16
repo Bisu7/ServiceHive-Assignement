@@ -1,35 +1,39 @@
-import 'dotenv/config'
 import { app } from './app'
-import { connectDatabase } from './config/db'
+import { connectDB } from './config/db'
 import { env } from './config/env'
 import { logger } from './utils/logger'
 
 /**
- * Server entry point.
- * Connects to MongoDB first, then starts listening — the API is only available
- * once the database is ready to handle queries.
+ * Bootstraps the LeadFlow backend server.
+ * Connects to the database and then starts the Express listener.
  */
-async function bootstrap(): Promise<void> {
-  await connectDatabase()
+async function bootstrap() {
+  try {
+    // 1. Connect to Database with retry logic
+    await connectDB()
 
-  const server = app.listen(env.PORT, () => {
-    logger.info(`LeadFlow API listening on http://localhost:${env.PORT} [${env.NODE_ENV}]`)
-  })
-
-  // Graceful shutdown on SIGTERM (e.g., Docker stop) or SIGINT (Ctrl+C)
-  const shutdown = (signal: string): void => {
-    logger.info(`${signal} received. Shutting down gracefully...`)
-    server.close(() => {
-      logger.info('HTTP server closed')
-      process.exit(0)
+    // 2. Start Express Server
+    const port = env.PORT
+    const server = app.listen(port, () => {
+      logger.info(`🚀 LeadFlow Server running in ${env.NODE_ENV} mode on port ${port}`)
     })
-  }
 
-  process.on('SIGTERM', () => shutdown('SIGTERM'))
-  process.on('SIGINT', () => shutdown('SIGINT'))
+    // Handle graceful shutdown
+    const shutdown = () => {
+      logger.info('Shutting down server...')
+      server.close(() => {
+        logger.info('Server closed')
+        process.exit(0)
+      })
+    }
+
+    process.on('SIGTERM', shutdown)
+    process.on('SIGINT', shutdown)
+
+  } catch (error) {
+    logger.error('Failed to start server:', error)
+    process.exit(1)
+  }
 }
 
-bootstrap().catch((err) => {
-  logger.error('Failed to start server:', err)
-  process.exit(1)
-})
+bootstrap()

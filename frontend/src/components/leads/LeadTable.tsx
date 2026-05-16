@@ -15,13 +15,11 @@ interface LeadTableProps {
   onRowClick: (lead: ILead) => void
 }
 
-/** Data table listing leads with status badges, value, source, and date */
+/** Professional data table for lead management */
 export function LeadTable({ leads, isLoading, pagination, onPageChange, onRowClick }: LeadTableProps) {
-
-
   if (isLoading) {
     return (
-      <div className="flex justify-center py-16">
+      <div className="flex justify-center py-20">
         <Spinner size="lg" />
       </div>
     )
@@ -32,39 +30,39 @@ export function LeadTable({ leads, isLoading, pagination, onPageChange, onRowCli
   }
 
   return (
-    <div className="flex flex-col gap-4">
-      <div className="overflow-hidden rounded-xl border border-white/10">
+    <div className="flex flex-col gap-6">
+      <div className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-soft dark:border-zinc-800 dark:bg-zinc-900/50">
         <table className="w-full text-sm" aria-label="Leads table">
           <thead>
-            <tr className="border-b border-white/10 bg-surface-800/50 text-left">
-              <th className="px-4 py-3 font-medium text-slate-400">Name</th>
-              <th className="px-4 py-3 font-medium text-slate-400">Status</th>
-              <th className="px-4 py-3 font-medium text-slate-400">Source</th>
-              <th className="px-4 py-3 font-medium text-slate-400">Value</th>
-              <th className="px-4 py-3 font-medium text-slate-400">Created</th>
+            <tr className="border-b border-slate-200 bg-slate-50/50 text-left dark:border-zinc-800 dark:bg-zinc-900">
+              <th className="px-6 py-4 font-bold uppercase tracking-wider text-slate-500 dark:text-zinc-500">Name</th>
+              <th className="px-6 py-4 font-bold uppercase tracking-wider text-slate-500 dark:text-zinc-500">Status</th>
+              <th className="px-6 py-4 font-bold uppercase tracking-wider text-slate-500 dark:text-zinc-500">Source</th>
+              <th className="px-6 py-4 font-bold uppercase tracking-wider text-slate-500 dark:text-zinc-500">Value</th>
+              <th className="px-6 py-4 font-bold uppercase tracking-wider text-slate-500 dark:text-zinc-500 text-right">Created</th>
             </tr>
           </thead>
-          <tbody>
+          <tbody className="divide-y divide-slate-100 dark:divide-zinc-800">
             {leads.map((lead) => (
               <tr
                 key={lead._id}
                 onClick={() => onRowClick(lead)}
-                className="cursor-pointer border-b border-white/5 transition-colors last:border-0 hover:bg-white/5"
+                className="group cursor-pointer transition-colors hover:bg-slate-50 dark:hover:bg-zinc-800/50"
               >
-                <td className="px-4 py-3">
+                <td className="px-6 py-4">
                   <div>
-                    <p className="font-medium text-slate-200">{lead.name}</p>
+                    <p className="font-bold text-slate-900 dark:text-white">{lead.name}</p>
                     <p className="text-xs text-slate-500">{lead.email}</p>
                   </div>
                 </td>
-                <td className="px-4 py-3">
+                <td className="px-6 py-4">
                   <Badge colorClass={LEAD_STATUS_COLORS[lead.status]}>
                     {LEAD_STATUS_LABELS[lead.status]}
                   </Badge>
                 </td>
-                <td className="px-4 py-3 text-slate-400">{LEAD_SOURCE_LABELS[lead.source]}</td>
-                <td className="px-4 py-3 font-medium text-slate-200">{formatCurrency(lead.value ?? null)}</td>
-                <td className="px-4 py-3 text-slate-500">{formatDate(lead.createdAt)}</td>
+                <td className="px-6 py-4 font-medium text-slate-600 dark:text-zinc-400">{LEAD_SOURCE_LABELS[lead.source]}</td>
+                <td className="px-6 py-4 font-bold text-slate-900 dark:text-white">{formatCurrency(lead.value ?? null)}</td>
+                <td className="px-6 py-4 text-right text-slate-500">{formatDate(lead.createdAt)}</td>
               </tr>
             ))}
           </tbody>
@@ -72,13 +70,18 @@ export function LeadTable({ leads, isLoading, pagination, onPageChange, onRowCli
       </div>
 
       {pagination && (
-        <Pagination
-          page={pagination.page}
-          totalPages={pagination.totalPages}
-          hasNextPage={pagination.hasNextPage}
-          hasPrevPage={pagination.hasPrevPage}
-          onPageChange={onPageChange}
-        />
+        <div className="flex justify-between items-center px-2">
+          <p className="text-sm font-medium text-slate-500">
+            Showing <span className="text-slate-900 dark:text-white">{leads.length}</span> leads
+          </p>
+          <Pagination
+            page={pagination.page}
+            totalPages={pagination.totalPages}
+            hasNextPage={pagination.hasNextPage}
+            hasPrevPage={pagination.hasPrevPage}
+            onPageChange={onPageChange}
+          />
+        </div>
       )}
     </div>
   )

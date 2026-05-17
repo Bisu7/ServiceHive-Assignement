@@ -1,11 +1,21 @@
 import { Request, Response, NextFunction } from 'express'
-import { AnyZodObject, ZodError } from 'zod'
+import { ZodSchema, ZodError } from 'zod'
 import { ApiError } from '../utils/ApiError'
 
-export const validate = (schema: AnyZodObject) => {
+export const validate = (schema: ZodSchema, source: 'body' | 'query' | 'params' = 'body') => {
   return async (req: Request, _res: Response, next: NextFunction) => {
     try {
-      await schema.parseAsync(req.body)
+      const target = source === 'query' ? req.query : source === 'params' ? req.params : req.body
+      const parsed = await schema.parseAsync(target)
+      
+      if (source === 'query') {
+        req.query = parsed as any
+      } else if (source === 'params') {
+        req.params = parsed as any
+      } else {
+        req.body = parsed
+      }
+      
       next()
     } catch (error) {
       if (error instanceof ZodError) {

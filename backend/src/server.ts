@@ -9,7 +9,7 @@ async function bootstrap() {
 
     const port = env.PORT
     const server = app.listen(port, () => {
-      logger.info(`🚀 LeadFlow Server running in ${env.NODE_ENV} mode on port ${port}`)
+      logger.info(`LeadFlow Server running in ${env.NODE_ENV} mode on port ${port}`)
     })
 
     const shutdown = () => {

@@ -35,7 +35,6 @@ export function LoginForm() {
         id="login-email"
         label="Email address"
         type="email"
-        placeholder="you@example.com"
         error={errors.email?.message}
         {...register('email')}
       />
@@ -43,7 +42,6 @@ export function LoginForm() {
         id="login-password"
         label="Password"
         type="password"
-        placeholder="Your password"
         error={errors.password?.message}
         {...register('password')}
       />

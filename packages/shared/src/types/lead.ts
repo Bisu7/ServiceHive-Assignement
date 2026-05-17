@@ -7,20 +7,13 @@ export enum LeadStatus {
   New = 'new',
   Contacted = 'contacted',
   Qualified = 'qualified',
-  Proposal = 'proposal',
-  Negotiation = 'negotiation',
-  Won = 'won',
   Lost = 'lost',
 }
 
 export enum LeadSource {
   Website = 'website',
+  Instagram = 'instagram',
   Referral = 'referral',
-  LinkedIn = 'linkedin',
-  ColdEmail = 'cold_email',
-  Event = 'event',
-  Advertisement = 'advertisement',
-  Other = 'other',
 }
 
 /** Immutable fields are marked readonly to prevent accidental mutation */
@@ -32,19 +25,20 @@ export interface ILead {
   company?: string
   status: LeadStatus
   source: LeadSource
-  /** Estimated deal value in USD */
   value?: number
   notes?: string
-  /** ID of the user who owns this lead */
+  /** ID of the user who owns/is assigned this lead */
   assignedTo?: string
+  /** ID of the user who created this lead */
+  createdBy: string
   readonly createdAt: string
   readonly updatedAt: string
 }
 
-/** Partial shape used when creating a new lead (server fills readonly fields) */
-export type CreateLeadPayload = Omit<ILead, '_id' | 'createdAt' | 'updatedAt'>
+/** Shape used when creating a new lead (server fills readonly fields) */
+export type CreateLeadPayload = Omit<ILead, '_id' | 'createdBy' | 'createdAt' | 'updatedAt'>
 
-/** Partial shape used when updating a lead */
+/** Shape used when updating a lead */
 export type UpdateLeadPayload = Partial<CreateLeadPayload>
 
 /** Filters that can be applied when querying leads */

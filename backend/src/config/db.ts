@@ -12,10 +12,10 @@ export async function connectDB(): Promise<void> {
       await mongoose.connect(env.MONGO_URI, {
         serverSelectionTimeoutMS: 5000,
       })
-      logger.info('✅ MongoDB connected successfully')
+      logger.info('MongoDB connected successfully')
       return
     } catch (error) {
-      logger.error(`❌ MongoDB connection attempt ${attempts} failed:`, error)
+      logger.error(`MongoDB connection attempt ${attempts} failed:`, error)
       if (attempts >= maxAttempts) {
         logger.error('CRITICAL: Max MongoDB connection attempts reached. Exiting...')
         process.exit(1)

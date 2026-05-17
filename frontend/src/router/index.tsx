@@ -8,11 +8,6 @@ import { LeadsPage } from '@/pages/LeadsPage'
 import { LeadDetailPage } from '@/pages/LeadDetailPage'
 import { NotFoundPage } from '@/pages/NotFoundPage'
 
-/**
- * Central route manifest for the LeadFlow application.
- * All protected routes are wrapped with ProtectedRoute and rendered
- * inside DashboardLayout to ensure authentication and consistent chrome.
- */
 export function AppRouter() {
   return (
     <Routes>

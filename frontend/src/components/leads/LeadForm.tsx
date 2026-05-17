@@ -43,7 +43,7 @@ export function LeadForm({ defaultValues, onSubmit, isLoading, submitLabel = 'Sa
     resolver: zodResolver(leadFormSchema),
     defaultValues: {
       status: LeadStatus.New,
-      source: LeadSource.Other,
+      source: LeadSource.Website,
       ...defaultValues,
     },
   })
@@ -51,11 +51,11 @@ export function LeadForm({ defaultValues, onSubmit, isLoading, submitLabel = 'Sa
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-4" noValidate>
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-        <Input id="lf-name" label="Full name *" placeholder="Jane Smith" error={errors.name?.message} {...register('name')} />
-        <Input id="lf-email" label="Email *" type="email" placeholder="jane@acme.com" error={errors.email?.message} {...register('email')} />
-        <Input id="lf-phone" label="Phone" type="tel" placeholder="+1 555 000 0000" error={errors.phone?.message} {...register('phone')} />
-        <Input id="lf-company" label="Company" placeholder="Acme Corp" error={errors.company?.message} {...register('company')} />
-        <Input id="lf-value" label="Deal value (USD)" type="number" placeholder="0" error={errors.value?.message} {...register('value')} />
+        <Input id="lf-name" label="Full name *" error={errors.name?.message} {...register('name')} />
+        <Input id="lf-email" label="Email *" type="email" error={errors.email?.message} {...register('email')} />
+        <Input id="lf-phone" label="Phone" type="tel" error={errors.phone?.message} {...register('phone')} />
+        <Input id="lf-company" label="Company" error={errors.company?.message} {...register('company')} />
+        <Input id="lf-value" label="Deal value (USD)" type="number" error={errors.value?.message} {...register('value')} />
       </div>
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
@@ -80,8 +80,7 @@ export function LeadForm({ defaultValues, onSubmit, isLoading, submitLabel = 'Sa
         <textarea
           id="lf-notes"
           rows={3}
-          placeholder="Add context about this lead…"
-          className="w-full resize-none rounded-lg border border-white/10 bg-surface-800 px-3.5 py-2.5 text-sm text-slate-100 placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-brand-500"
+          className="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm transition-all duration-200 focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/20 dark:border-zinc-800 dark:bg-zinc-900 dark:text-white"
           {...register('notes')}
         />
       </div>

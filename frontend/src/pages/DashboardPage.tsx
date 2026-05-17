@@ -53,9 +53,9 @@ export function DashboardPage() {
   const user = useAuthStore((state) => state.user)
   const leads = useLeadsStore((state) => state.leads)
 
-  const won = leads.filter((l) => l.status === LeadStatus.Won).length
+  const qualified = leads.filter((l) => l.status === LeadStatus.Qualified).length
   const lost = leads.filter((l) => l.status === LeadStatus.Lost).length
-  const active = leads.filter((l) => l.status !== LeadStatus.Won && l.status !== LeadStatus.Lost).length
+  const active = leads.filter((l) => l.status !== LeadStatus.Qualified && l.status !== LeadStatus.Lost).length
 
   return (
     <div className="flex flex-col gap-10 animate-fade-in">
@@ -87,8 +87,8 @@ export function DashboardPage() {
             trend={{ value: '5%', positive: true }}
           />
           <StatCard 
-            label="Deals Won" 
-            value={won} 
+            label="Leads Qualified" 
+            value={qualified} 
             icon={CheckCircle2} 
             colorClass="bg-emerald-50 text-emerald-600 dark:bg-emerald-900/20 dark:text-emerald-400"
             trend={{ value: '8%', positive: true }}

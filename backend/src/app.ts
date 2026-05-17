@@ -3,6 +3,7 @@ import helmet from 'helmet'
 import cors from 'cors'
 import { env } from './config/env'
 import { authRouter } from './modules/auth/auth.routes'
+import { leadsRouter } from './modules/leads/leads.routes'
 import { errorMiddleware } from './middleware/error.middleware'
 import { apiLimiter } from './middleware/rateLimit.middleware'
 import { ApiError } from './utils/ApiError'
@@ -22,6 +23,7 @@ app.use(express.urlencoded({ extended: true, limit: '10kb' }))
 
 app.use('/api', apiLimiter)
 app.use('/api/auth', authRouter)
+app.use('/api/leads', leadsRouter)
 
 app.get('/health', (_req, res) => {
   res.status(200).json({ status: 'UP', timestamp: new Date().toISOString() })

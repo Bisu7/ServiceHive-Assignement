@@ -5,7 +5,7 @@ import { registerSchema, loginSchema } from './auth.schema'
 import { protect } from '../../middleware/auth.middleware'
 import { authLimiter } from '../../middleware/rateLimit.middleware'
 
-const router = Router()
+const router: Router = Router()
 
 // Apply auth rate limiting to all auth routes
 router.use(authLimiter)
@@ -38,4 +38,4 @@ router.get('/me', protect, AuthController.getMe)
  */
 router.post('/logout', protect, AuthController.logout)
 
-export const authRouter = router
+export const authRouter: Router = router

@@ -8,7 +8,7 @@ import { useAuthStore } from '@/store/authStore'
  * - Response interceptor handles 401s by clearing auth state
  */
 const apiClient = axios.create({
-  baseURL: (import.meta.env.VITE_API_BASE_URL as string) || '/api',
+  baseURL: ((import.meta as any).env.VITE_API_BASE_URL as string) || '/api',
   timeout: 10_000,
   headers: {
     'Content-Type': 'application/json',

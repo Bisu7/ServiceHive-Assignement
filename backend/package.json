@@ -9,7 +9,8 @@
     "build": "tsc --project tsconfig.json",
     "start": "node dist/server.js",
     "lint": "eslint src --ext .ts",
-    "type-check": "tsc --noEmit"
+    "type-check": "tsc --noEmit",
+    "seed": "ts-node-dev -r tsconfig-paths/register --transpile-only src/scripts/seed.ts"
   },
   "dependencies": {
     "@leadflow/shared": "workspace:*",

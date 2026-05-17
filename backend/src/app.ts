@@ -25,8 +25,12 @@ app.use('/api', apiLimiter)
 app.use('/api/auth', authRouter)
 app.use('/api/leads', leadsRouter)
 
-app.get('/health', (_req, res) => {
-  res.status(200).json({ status: 'UP', timestamp: new Date().toISOString() })
+app.get('/api/health', (_req, res) => {
+  res.status(200).json({
+    status: 'ok',
+    timestamp: new Date().toISOString(),
+    environment: env.NODE_ENV,
+  })
 })
 
 app.all('*', (req: Request, _res: Response, next: NextFunction) => {

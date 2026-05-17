@@ -1,8 +1,6 @@
 # Stage 1: base
 FROM node:20-alpine AS base
-ENV PNPM_HOME="/pnpm"
-ENV PATH="$PNPM_HOME:$PATH"
-RUN corepack enable
+RUN npm install -g pnpm@9.15.4
 
 # Stage 2: deps
 FROM base AS deps

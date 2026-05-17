@@ -1,12 +1,14 @@
-import { useEffect, useState } from 'react'
+import React, { useEffect, useState } from 'react'
 import { Sun, Moon } from 'lucide-react'
 
-/** Persistent theme switcher for light/dark mode */
 export function ThemeToggle() {
   const [isDark, setIsDark] = useState(() => {
     if (typeof window !== 'undefined') {
-      return document.documentElement.classList.contains('dark') || 
-             localStorage.getItem('theme') === 'dark'
+      const savedTheme = localStorage.getItem('theme')
+      if (savedTheme) {
+        return savedTheme === 'dark'
+      }
+      return false // Light mode initially!
     }
     return false
   })
@@ -25,10 +27,13 @@ export function ThemeToggle() {
   return (
     <button
       onClick={() => setIsDark(!isDark)}
-      className="flex h-9 w-9 items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-500 transition-colors hover:bg-slate-50 hover:text-slate-900 dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-400 dark:hover:bg-zinc-800 dark:hover:text-zinc-100"
+      className="flex h-9 w-9 items-center justify-center rounded-lg border border-white/[0.05] text-slate-400 hover:text-white hover:bg-white/[0.04] transition-colors"
       title={isDark ? 'Switch to light mode' : 'Switch to dark mode'}
+      aria-label="Toggle dark/light mode"
     >
-      {isDark ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
+      {isDark ? <Sun size={16} /> : <Moon size={16} />}
     </button>
   )
 }
+
+export default ThemeToggle

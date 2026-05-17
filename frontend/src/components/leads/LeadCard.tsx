@@ -39,7 +39,7 @@ export function LeadCard({ lead, className }: LeadCardProps) {
             </div>
           )}
         </div>
-        <Badge colorClass={LEAD_STATUS_COLORS[lead.status]}>{LEAD_STATUS_LABELS[lead.status]}</Badge>
+        <Badge status={lead.status} />
       </div>
 
       <div className="flex items-center gap-1 text-xs text-slate-500">

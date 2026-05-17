@@ -1,88 +1,103 @@
-import { useState, useRef, useEffect } from 'react'
-import { ChevronDown } from 'lucide-react'
+import React, { useState, useRef, useEffect } from 'react'
 import { cn } from '@/utils/cn'
 
-interface DropdownOption {
+export interface DropdownOption {
   label: string
   value: string
 }
 
-interface DropdownProps {
+export interface DropdownProps {
   options: DropdownOption[]
-  value: string | undefined
+  value?: string
   onChange: (value: string) => void
   placeholder?: string
   label?: string
-  id: string
+  error?: string
+  className?: string
 }
 
-/**
- * Custom dropdown select with keyboard navigation and click-outside close.
- * Used for filter selects where native <select> styling is insufficient.
- */
-export function Dropdown({ options, value, onChange, placeholder = 'Select…', label, id }: DropdownProps) {
+export function Dropdown({
+  options,
+  value,
+  onChange,
+  placeholder = 'Select an option',
+  label,
+  error,
+  className,
+}: DropdownProps) {
   const [isOpen, setIsOpen] = useState(false)
-  const ref = useRef<HTMLDivElement>(null)
+  const dropdownRef = useRef<HTMLDivElement>(null)
 
-  const selectedOption = options.find((o) => o.value === value)
+  const selectedOption = options.find((opt) => opt.value === value)
 
-  // Close dropdown when clicking outside
   useEffect(() => {
-    const handler = (e: MouseEvent): void => {
-      if (ref.current && !ref.current.contains(e.target as Node)) {
+    const clickOutside = (e: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
         setIsOpen(false)
       }
     }
-    document.addEventListener('mousedown', handler)
-    return () => document.removeEventListener('mousedown', handler)
+    document.addEventListener('mousedown', clickOutside)
+    return () => document.removeEventListener('mousedown', clickOutside)
   }, [])
 
   return (
-    <div ref={ref} className="relative flex flex-col gap-1.5">
+    <div ref={dropdownRef} className={cn('relative w-full flex flex-col gap-1.5', className)}>
       {label && (
-        <label htmlFor={id} className="text-sm font-medium text-slate-300">
+        <span className="text-xs font-semibold uppercase tracking-wider text-slate-400">
           {label}
-        </label>
+        </span>
       )}
+      
       <button
-        id={id}
         type="button"
-        onClick={() => setIsOpen((prev) => !prev)}
-        aria-haspopup="listbox"
-        aria-expanded={isOpen}
+        onClick={() => setIsOpen(!isOpen)}
         className={cn(
-          'flex items-center justify-between rounded-lg border border-white/10 bg-surface-800 px-3.5 py-2.5 text-sm',
-          'transition-colors hover:border-white/20 focus:outline-none focus:ring-2 focus:ring-brand-500',
-          selectedOption ? 'text-slate-100' : 'text-slate-500'
+          'w-full bg-obsidian-600 border border-white/[0.05] rounded-lg text-slate-100 text-sm py-2.5 px-4 flex items-center justify-between transition-all duration-200 outline-none text-left',
+          isOpen ? 'border-accent ring-1 ring-accent' : 'hover:border-white/[0.12]',
+          error && 'border-rose-500/50 focus:border-rose-500'
         )}
       >
-        {selectedOption?.label ?? placeholder}
-        <ChevronDown className={cn('ml-2 h-4 w-4 text-slate-400 transition-transform', isOpen && 'rotate-180')} />
+        <span className={cn(!selectedOption && 'text-slate-500')}>
+          {selectedOption ? selectedOption.label : placeholder}
+        </span>
+        <svg
+          className={cn('w-4 h-4 text-slate-400 transition-transform duration-200', isOpen && 'rotate-180')}
+          fill="none"
+          stroke="currentColor"
+          viewBox="0 0 24 24"
+        >
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
+        </svg>
       </button>
 
       {isOpen && (
-        <ul
-          role="listbox"
-          className="absolute top-full z-50 mt-1 w-full overflow-hidden rounded-lg border border-white/10 bg-surface-800 shadow-xl animate-fade-in"
-        >
-          {options.map((option) => (
-            <li
-              key={option.value}
-              role="option"
-              aria-selected={option.value === value}
-              onClick={() => { onChange(option.value); setIsOpen(false) }}
-              className={cn(
-                'cursor-pointer px-3.5 py-2.5 text-sm transition-colors',
-                option.value === value
-                  ? 'bg-brand-500/20 text-brand-300'
-                  : 'text-slate-300 hover:bg-white/5'
-              )}
-            >
-              {option.label}
-            </li>
-          ))}
-        </ul>
+        <div className="absolute top-[calc(100%+4px)] left-0 right-0 z-50 bg-obsidian-700 border border-white/[0.08] rounded-lg shadow-xl py-1.5 max-h-60 overflow-y-auto transition-all duration-200">
+          {options.length === 0 ? (
+            <div className="px-4 py-2 text-sm text-slate-500">No options available</div>
+          ) : (
+            options.map((opt) => (
+              <button
+                key={opt.value}
+                type="button"
+                onClick={() => {
+                  onChange(opt.value)
+                  setIsOpen(false)
+                }}
+                className={cn(
+                  'w-full text-left px-4 py-2 text-sm transition-colors text-slate-300 hover:text-white hover:bg-white/[0.04]',
+                  opt.value === value && 'text-accent hover:text-accent font-semibold bg-accent/5'
+                )}
+              >
+                {opt.label}
+              </button>
+            ))
+          )}
+        </div>
       )}
+
+      {error && <span className="text-xs font-medium text-rose-400">{error}</span>}
     </div>
   )
 }
+
+export default Dropdown

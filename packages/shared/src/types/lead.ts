@@ -48,4 +48,5 @@ export interface LeadFilters {
   search?: string
   page?: number
   limit?: number
+  sortBy?: 'latest' | 'oldest'
 }

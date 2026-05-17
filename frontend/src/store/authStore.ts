@@ -1,37 +1,75 @@
 import { create } from 'zustand'
 import { persist, createJSONStorage } from 'zustand/middleware'
 import type { IUser } from '@leadflow/shared'
+import { apiClient } from '@/api/client'
 
 interface AuthState {
-  token: string | null
   user: IUser | null
+  token: string | null
+  isLoading: boolean
   isAuthenticated: boolean
-  /** Stores the token and user after a successful login/register */
-  setAuth: (token: string, user: IUser) => void
-  /** Clears all auth state — used on logout and 401 responses */
-  logout: () => void
+  setAuth: (user: IUser, token: string) => void
+  clearAuth: () => void
+  fetchCurrentUser: () => Promise<void>
+  initialize: () => Promise<void>
 }
 
-/**
- * Zustand auth store with localStorage persistence.
- * Token is persisted so users remain logged in across browser refreshes.
- */
 export const useAuthStore = create<AuthState>()(
   persist(
-    (set) => ({
-      token: null,
+    (set, get) => ({
       user: null,
+      token: null,
+      isLoading: false,
       isAuthenticated: false,
 
-      setAuth: (token, user) => set({ token, user, isAuthenticated: true }),
+      setAuth: (user, token) =>
+        set({
+          user,
+          token,
+          isAuthenticated: true,
+        }),
 
-      logout: () => set({ token: null, user: null, isAuthenticated: false }),
+      clearAuth: () =>
+        set({
+          user: null,
+          token: null,
+          isAuthenticated: false,
+        }),
+
+      fetchCurrentUser: async () => {
+        set({ isLoading: true })
+        try {
+          const res = await apiClient.get<{ success: boolean; data: IUser }>('/auth/me')
+          set({
+            user: res.data.data,
+            isAuthenticated: true,
+            isLoading: false,
+          })
+        } catch (error) {
+          // silently handle 401
+          set({
+            user: null,
+            token: null,
+            isAuthenticated: false,
+            isLoading: false,
+          })
+        }
+      },
+
+      initialize: async () => {
+        if (get().token) {
+          await get().fetchCurrentUser()
+        }
+      },
     }),
     {
       name: 'leadflow-auth',
       storage: createJSONStorage(() => localStorage),
-      // Only persist the token — user can be re-fetched from /auth/me
-      partialize: (state) => ({ token: state.token, user: state.user }),
+      partialize: (state) => ({
+        user: state.user,
+        token: state.token,
+        isAuthenticated: state.isAuthenticated,
+      }),
     }
   )
 )

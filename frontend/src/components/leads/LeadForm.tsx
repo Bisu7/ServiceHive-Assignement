@@ -1,93 +1,77 @@
-import { useForm, Controller } from 'react-hook-form'
+import React from 'react'
+import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
-import { Input } from '@/components/ui/Input'
-import { Button } from '@/components/ui/Button'
-import { Dropdown } from '@/components/ui/Dropdown'
+import { Input } from '../ui/Input'
+import { Button } from '../ui/Button'
+import { Dropdown } from '../ui/Dropdown'
 import { LeadStatus, LeadSource } from '@leadflow/shared'
-import { LEAD_STATUS_LABELS, LEAD_SOURCE_LABELS } from '@/types/lead.types'
-import type { ILead } from '@leadflow/shared'
 
 const leadFormSchema = z.object({
-  name: z.string().min(2, 'Name must be at least 2 characters'),
-  email: z.string().email('Enter a valid email'),
-  phone: z.string().optional(),
-  company: z.string().optional(),
+  name: z.string().min(2, 'Name must be at least 2 characters').max(100, 'Name cannot exceed 100 characters'),
+  email: z.string().email('Please enter a valid email address'),
   status: z.nativeEnum(LeadStatus),
   source: z.nativeEnum(LeadSource),
-  value: z.coerce.number().nonnegative().optional(),
-  notes: z.string().max(2000).optional(),
+  notes: z.string().max(1000).optional(),
 })
 
-type LeadFormValues = z.infer<typeof leadFormSchema>
+export type LeadFormValues = z.infer<typeof leadFormSchema>
 
-interface LeadFormProps {
-  /** Pre-populated values when editing an existing lead */
-  defaultValues?: Partial<ILead>
-  onSubmit: (data: LeadFormValues) => Promise<void>
-  isLoading: boolean
-  submitLabel?: string
+export interface LeadFormProps {
+  mode: 'create' | 'edit'
+  initialData?: Partial<LeadFormValues>
+  onSubmit: (data: LeadFormValues) => void
+  loading?: boolean
 }
 
-const statusOptions = Object.values(LeadStatus).map((v) => ({ value: v, label: LEAD_STATUS_LABELS[v] }))
-const sourceOptions = Object.values(LeadSource).map((v) => ({ value: v, label: LEAD_SOURCE_LABELS[v] }))
-
-/** Reusable lead create/edit form wired to RHF + Zod */
-export function LeadForm({ defaultValues, onSubmit, isLoading, submitLabel = 'Save lead' }: LeadFormProps) {
+export function LeadForm({ mode, initialData, onSubmit, loading = false }: LeadFormProps) {
   const {
     register,
     handleSubmit,
-    control,
+    setValue,
+    watch,
     formState: { errors },
   } = useForm<LeadFormValues>({
     resolver: zodResolver(leadFormSchema),
     defaultValues: {
       status: LeadStatus.New,
       source: LeadSource.Website,
-      ...defaultValues,
+      ...initialData,
     },
   })
 
-  return (
-    <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-4" noValidate>
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-        <Input id="lf-name" label="Full name *" error={errors.name?.message} {...register('name')} />
-        <Input id="lf-email" label="Email *" type="email" error={errors.email?.message} {...register('email')} />
-        <Input id="lf-phone" label="Phone" type="tel" error={errors.phone?.message} {...register('phone')} />
-        <Input id="lf-company" label="Company" error={errors.company?.message} {...register('company')} />
-        <Input id="lf-value" label="Deal value (USD)" type="number" error={errors.value?.message} {...register('value')} />
-      </div>
+  const status = watch('status')
+  const source = watch('source')
 
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-        <Controller
-          name="status"
-          control={control}
-          render={({ field }) => (
-            <Dropdown id="lf-status" label="Status" options={statusOptions} value={field.value} onChange={field.onChange} />
-          )}
-        />
-        <Controller
-          name="source"
-          control={control}
-          render={({ field }) => (
-            <Dropdown id="lf-source" label="Source" options={sourceOptions} value={field.value} onChange={field.onChange} />
-          )}
-        />
+  const statusOptions = Object.values(LeadStatus).map((s) => ({ label: s.toUpperCase(), value: s }))
+  const sourceOptions = Object.values(LeadSource).map((s) => ({ label: s.toUpperCase(), value: s }))
+
+  return (
+    <form onSubmit={handleSubmit(onSubmit)} className="space-y-4 w-full" noValidate>
+      <Input label="Name *" placeholder="Lead Name" error={errors.name?.message} {...register('name')} />
+      <Input label="Email Address *" type="email" placeholder="email@example.com" error={errors.email?.message} {...register('email')} />
+
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <Dropdown label="Status" value={status} onChange={(val) => setValue('status', val as LeadStatus)} options={statusOptions} error={errors.status?.message} />
+        <Dropdown label="Source" value={source} onChange={(val) => setValue('source', val as LeadSource)} options={sourceOptions} error={errors.source?.message} />
       </div>
 
       <div className="flex flex-col gap-1.5">
-        <label htmlFor="lf-notes" className="text-sm font-medium text-slate-300">Notes</label>
+        <label className="text-xs font-semibold uppercase tracking-wider text-slate-400">Notes</label>
         <textarea
-          id="lf-notes"
           rows={3}
-          className="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm transition-all duration-200 focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/20 dark:border-zinc-800 dark:bg-zinc-900 dark:text-white"
+          placeholder="Add comments or notes..."
+          className="w-full bg-obsidian-600 border border-white/[0.05] rounded-lg text-slate-100 text-sm py-2.5 px-4 transition-all duration-200 outline-none placeholder-slate-500 focus:border-accent focus:ring-1 focus:ring-accent"
           {...register('notes')}
         />
+        {errors.notes && <span className="text-xs font-medium text-rose-400">{errors.notes.message}</span>}
       </div>
 
-      <Button type="submit" isLoading={isLoading} className="mt-2">
-        {submitLabel}
+      <Button type="submit" variant="primary" className="w-full mt-2" loading={loading}>
+        {mode === 'edit' ? 'Save Changes' : 'Create Lead'}
       </Button>
     </form>
   )
 }
+
+export default LeadForm

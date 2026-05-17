@@ -1,72 +1,107 @@
-import { Dropdown } from '@/components/ui/Dropdown'
-import { Input } from '@/components/ui/Input'
-import { Button } from '@/components/ui/Button'
-import { LeadStatus, LeadSource } from '@leadflow/shared'
-import { LEAD_STATUS_LABELS, LEAD_SOURCE_LABELS } from '@/types/lead.types'
+import React, { useEffect, useState } from 'react'
+import { Search, X } from 'lucide-react'
+import { Input } from '../ui/Input'
+import { Dropdown } from '../ui/Dropdown'
+import { Button } from '../ui/Button'
 import { useLeadsStore } from '@/store/leadsStore'
 import { useDebounce } from '@/hooks/useDebounce'
-import { useEffect, useState } from 'react'
-import { X } from 'lucide-react'
+import { LeadStatus, LeadSource } from '@leadflow/shared'
 
-const statusOptions = [
-  { value: '', label: 'All statuses' },
-  ...Object.values(LeadStatus).map((v) => ({ value: v, label: LEAD_STATUS_LABELS[v] })),
-]
-
-const sourceOptions = [
-  { value: '', label: 'All sources' },
-  ...Object.values(LeadSource).map((v) => ({ value: v, label: LEAD_SOURCE_LABELS[v] })),
-]
-
-/** Filter bar for the leads list — status, source, and full-text search */
 export function LeadFilters() {
-  const { filters, setFilters } = useLeadsStore()
-  const [searchInput, setSearchInput] = useState(filters.search ?? '')
-  const debouncedSearch = useDebounce(searchInput, 400)
+  const filters = useLeadsStore((state) => state.filters)
+  const setFilter = useLeadsStore((state) => state.setFilter)
+  const clearFilters = useLeadsStore((state) => state.clearFilters)
 
-  // Sync debounced search value into the store
+  const [localSearch, setLocalSearch] = useState(filters.search || '')
+  const debouncedSearch = useDebounce(localSearch, 400)
+  const [isSearching, setIsSearching] = useState(false)
+
+  // Sync local input with store when search changes externally (e.g. on clear)
   useEffect(() => {
-    setFilters({ search: debouncedSearch || undefined })
-  }, [debouncedSearch, setFilters])
+    setLocalSearch(filters.search || '')
+  }, [filters.search])
 
-  const hasActiveFilters = filters.status || filters.source || filters.search
+  // Toggle debouncing loading border pulse when user types
+  useEffect(() => {
+    if (localSearch !== (filters.search || '')) {
+      setIsSearching(true)
+    }
+  }, [localSearch, filters.search])
+
+  // Sync debounced value with store
+  useEffect(() => {
+    // Only call setFilter if the value actually changed to prevent double renders
+    if (debouncedSearch !== (filters.search || '')) {
+      setFilter('search', debouncedSearch || undefined)
+    }
+    setIsSearching(false)
+  }, [debouncedSearch, filters.search, setFilter])
+
+  const handleFilterChange = (key: 'status' | 'source', value: string) => {
+    setFilter(key, (value as any) || undefined)
+  }
+
+  const statusOptions = [
+    { label: 'All Statuses', value: '' },
+    ...Object.values(LeadStatus).map((s) => ({
+      label: s.toUpperCase(),
+      value: s,
+    })),
+  ]
+
+  const sourceOptions = [
+    { label: 'All Sources', value: '' },
+    ...Object.values(LeadSource).map((s) => ({
+      label: s.toUpperCase(),
+      value: s,
+    })),
+  ]
+
+  const hasActiveFilters = !!(filters.search || filters.status || filters.source)
 
   return (
-    <div className="flex flex-wrap items-end gap-3">
-      <Input
-        id="lead-search"
-        placeholder="Search by name, email, company…"
-        value={searchInput}
-        onChange={(e) => setSearchInput(e.target.value)}
-        className="min-w-[220px]"
-      />
-      <Dropdown
-        id="lead-status-filter"
-        label=""
-        options={statusOptions}
-        value={filters.status ?? ''}
-        onChange={(v) => setFilters({ status: (v as LeadStatus) || undefined })}
-        placeholder="All statuses"
-      />
-      <Dropdown
-        id="lead-source-filter"
-        label=""
-        options={sourceOptions}
-        value={filters.source ?? ''}
-        onChange={(v) => setFilters({ source: (v as LeadSource) || undefined })}
-        placeholder="All sources"
-      />
+    <div className="flex flex-col md:flex-row items-stretch md:items-end gap-4 w-full bg-obsidian-700 p-4 border border-white/[0.05] rounded-xl">
+      <div className="flex-1">
+        <Input
+          label="Search Leads"
+          placeholder="Search by name or email..."
+          value={localSearch}
+          onChange={(e) => setLocalSearch(e.target.value)}
+          leftIcon={<Search size={16} />}
+          className={isSearching ? 'animate-pulse-accent' : undefined}
+        />
+      </div>
+      <div className="w-full md:w-48">
+        <Dropdown
+          label="Filter Status"
+          value={filters.status || ''}
+          onChange={(val) => handleFilterChange('status', val)}
+          options={statusOptions}
+        />
+      </div>
+      <div className="w-full md:w-48">
+        <Dropdown
+          label="Filter Source"
+          value={filters.source || ''}
+          onChange={(val) => handleFilterChange('source', val)}
+          options={sourceOptions}
+        />
+      </div>
       {hasActiveFilters && (
         <Button
-          variant="ghost"
-          size="sm"
-          onClick={() => { setFilters({ status: undefined, source: undefined, search: undefined }); setSearchInput('') }}
-          aria-label="Clear all filters"
+          variant="secondary"
+          onClick={() => {
+            clearFilters()
+            setLocalSearch('')
+          }}
+          icon={<X size={14} />}
+          className="flex-shrink-0"
         >
-          <X className="h-4 w-4" aria-hidden />
-          Clear
+          Clear Filters
         </Button>
       )}
     </div>
   )
 }
+
+export default LeadFilters

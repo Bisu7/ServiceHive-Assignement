@@ -1,32 +1,37 @@
 import type { Config } from 'tailwindcss'
 
-/**
- * Obsidian UI Design System Palette Decision:
- * 
- * - Main dark background: #0f1117 (obsidian.800) — A solid, non-blue tinted deep charcoal that feels like pure premium stone.
- * - Container/Card background: #161b27 (obsidian.700) — Adds excellent depth contrast without compromising on real dark aesthetics.
- * - Form Input background: #1e2433 (obsidian.600) — Standardized dark filled input canvas, ideal for modern form styling.
- * - Primary Electric Accent: Violet (#7c3aed) — Extremely high-contrast and electric, representing premium developer-focused SaaS.
- * - Feel: Deep, premium obsidian theme designed to be extremely comforting for sales professionals spending hours in the platform.
- */
 const config: Config = {
   content: ['./index.html', './src/**/*.{ts,tsx}'],
   darkMode: 'class',
   theme: {
     extend: {
       colors: {
+        white: 'rgb(var(--color-white) / <alpha-value>)',
         obsidian: {
-          50: '#f9f9fa',
-          100: '#f0f2f5',
-          200: '#dcdfe6',
-          300: '#bec5d1',
-          400: '#949fb5',
-          500: '#64748b', // Slate mid
-          600: '#1e2433', // Input dark filled bg
-          700: '#161b27', // Card/Container bg
-          800: '#0f1117', // Main viewport bg
-          900: '#0a0b0f',
-          950: '#050608',
+          50: 'var(--obsidian-50)',
+          100: 'var(--obsidian-100)',
+          200: 'var(--obsidian-200)',
+          300: 'var(--obsidian-300)',
+          400: 'var(--obsidian-400)',
+          500: 'var(--obsidian-500)',
+          600: 'var(--obsidian-600)',
+          700: 'var(--obsidian-700)',
+          800: 'var(--obsidian-800)',
+          900: 'var(--obsidian-900)',
+          950: 'var(--obsidian-950)',
+        },
+        slate: {
+          50: 'var(--slate-50)',
+          100: 'var(--slate-100)',
+          200: 'var(--slate-200)',
+          300: 'var(--slate-300)',
+          400: 'var(--slate-400)',
+          500: 'var(--slate-500)',
+          600: 'var(--slate-600)',
+          700: 'var(--slate-700)',
+          800: 'var(--slate-800)',
+          900: 'var(--slate-900)',
+          950: 'var(--slate-950)',
         },
         accent: {
           DEFAULT: '#7c3aed', // Electric Violet
@@ -48,7 +53,7 @@ const config: Config = {
       fontFamily: {
         sans: ['"Inter"', 'system-ui', 'sans-serif'],
         display: ['"Inter"', 'system-ui', 'sans-serif'],
-        mono: ['"JetBrains Mono"', 'ui-monospace', 'monospace'], // Tabular numbers for counters/stats
+        mono: ['"JetBrains Mono"', 'ui-monospace', 'monospace'],
       },
     },
   },

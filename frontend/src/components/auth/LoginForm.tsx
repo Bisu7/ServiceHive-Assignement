@@ -1,22 +1,25 @@
+import React, { useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
-import { Link } from 'react-router-dom'
-import { useAuth } from '@/hooks/useAuth'
-import { Button } from '@/components/ui/Button'
-import { Input } from '@/components/ui/Input'
+import { Eye, EyeOff, Lock, Mail } from 'lucide-react'
+import { Input } from '../ui/Input'
+import { Button } from '../ui/Button'
 
 const loginSchema = z.object({
-  email: z.string().email('Enter a valid email address'),
+  email: z.string().email('Please enter a valid email address'),
   password: z.string().min(1, 'Password is required'),
 })
 
-type LoginFormValues = z.infer<typeof loginSchema>
+export type LoginFormValues = z.infer<typeof loginSchema>
 
-/** Login form with RHF + Zod validation and loading state */
-export function LoginForm() {
-  const { login, isLoading } = useAuth()
+export interface LoginFormProps {
+  onSubmit: (values: LoginFormValues) => void
+  loading?: boolean
+}
 
+export function LoginForm({ onSubmit, loading = false }: LoginFormProps) {
+  const [showPassword, setShowPassword] = useState(false)
   const {
     register,
     handleSubmit,
@@ -25,35 +28,40 @@ export function LoginForm() {
     resolver: zodResolver(loginSchema),
   })
 
-  const onSubmit = (data: LoginFormValues): void => {
-    void login(data)
-  }
-
   return (
-    <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-5" noValidate>
+    <form onSubmit={handleSubmit(onSubmit)} className="space-y-5 w-full">
       <Input
-        id="login-email"
-        label="Email address"
-        type="email"
-        error={errors.email?.message}
         {...register('email')}
+        type="email"
+        label="Email Address"
+        placeholder="you@example.com"
+        error={errors.email?.message}
+        leftIcon={<Mail size={16} />}
       />
+
       <Input
-        id="login-password"
-        label="Password"
-        type="password"
-        error={errors.password?.message}
         {...register('password')}
+        type={showPassword ? 'text' : 'password'}
+        label="Password"
+        placeholder="••••••••"
+        error={errors.password?.message}
+        leftIcon={<Lock size={16} />}
+        rightIcon={
+          <button
+            type="button"
+            onClick={() => setShowPassword(!showPassword)}
+            className="text-slate-400 hover:text-white transition-colors"
+          >
+            {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+          </button>
+        }
       />
-      <Button type="submit" isLoading={isLoading} className="mt-2 w-full">
-        Sign in
+
+      <Button type="submit" variant="primary" className="w-full" loading={loading}>
+        Sign In
       </Button>
-      <p className="text-center text-sm text-slate-500 dark:text-zinc-500">
-        Don&apos;t have an account?{' '}
-        <Link to="/register" className="font-bold text-brand-600 hover:text-brand-700 dark:text-brand-400">
-          Create one
-        </Link>
-      </p>
     </form>
   )
 }
+
+export default LoginForm

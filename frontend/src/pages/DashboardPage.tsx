@@ -1,117 +1,208 @@
+import React, { useEffect } from 'react'
+import { Link } from 'react-router-dom'
 import { useAuthStore } from '@/store/authStore'
 import { useLeadsStore } from '@/store/leadsStore'
-import { LeadStatus } from '@leadflow/shared'
+import { EmptyState } from '@/components/ui/EmptyState'
+import { Spinner } from '@/components/ui/Spinner'
+import { Button } from '@/components/ui/Button'
 import { 
   Users, 
   TrendingUp, 
   CheckCircle2, 
   XCircle,
-  ArrowUpRight,
-  ArrowDownRight
+  Plus,
+  ArrowUpRight
 } from 'lucide-react'
 
-/** Summary card for KPI metrics with trend indicators */
-function StatCard({ 
-  label, 
-  value, 
-  icon: Icon, 
-  colorClass,
-  trend
-}: { 
-  label: string; 
-  value: number; 
-  icon: React.ElementType; 
-  colorClass: string;
-  trend?: { value: string; positive: boolean }
-}) {
-  return (
-    <div className="clean-card p-6">
-      <div className="flex items-start justify-between">
-        <div className={`flex h-12 w-12 items-center justify-center rounded-2xl ${colorClass} shadow-sm`}>
-          <Icon className="h-6 w-6" aria-hidden />
-        </div>
-        {trend && (
-          <div className={`flex items-center gap-0.5 text-xs font-bold ${trend.positive ? 'text-emerald-600' : 'text-rose-600'}`}>
-            {trend.positive ? <ArrowUpRight className="h-3 w-3" /> : <ArrowDownRight className="h-3 w-3" />}
-            {trend.value}
-          </div>
-        )}
-      </div>
-      <div className="mt-5">
-        <p className="text-3xl font-black tracking-tight text-slate-900 dark:text-white">{value}</p>
-        <p className="text-sm font-semibold text-slate-500 dark:text-zinc-500">{label}</p>
-      </div>
-    </div>
-  )
-}
-
-/**
- * Dashboard page showing aggregate lead stats.
- * Uses a bright, high-contrast layout for a professional "Real" feel.
- */
 export function DashboardPage() {
   const user = useAuthStore((state) => state.user)
   const leads = useLeadsStore((state) => state.leads)
+  const isLoading = useLeadsStore((state) => state.isLoading)
+  const fetchLeads = useLeadsStore((state) => state.fetchLeads)
 
-  const qualified = leads.filter((l) => l.status === LeadStatus.Qualified).length
-  const lost = leads.filter((l) => l.status === LeadStatus.Lost).length
-  const active = leads.filter((l) => l.status !== LeadStatus.Qualified && l.status !== LeadStatus.Lost).length
+  useEffect(() => {
+    // Fetch a large limit on dashboard to accurately compute all KPI statistics
+    fetchLeads({ limit: 1000, page: 1 })
+  }, [fetchLeads])
+
+  // Derive all KPIs
+  const totalLeads = leads.length
+  
+  const now = new Date()
+  const oneWeekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000)
+  const newThisWeek = leads.filter((l) => new Date(l.createdAt) >= oneWeekAgo).length
+
+  const qualifiedCount = leads.filter((l) => l.status === 'qualified').length
+  const qualifiedRate = totalLeads ? Math.round((qualifiedCount / totalLeads) * 100) : 0
+
+  const lostCount = leads.filter((l) => l.status === 'lost').length
+  const lostRate = totalLeads ? Math.round((lostCount / totalLeads) * 100) : 0
+
+  if (isLoading && totalLeads === 0) {
+    return (
+      <div className="flex h-[60vh] w-full items-center justify-center">
+        <Spinner size="lg" />
+      </div>
+    )
+  }
 
   return (
-    <div className="flex flex-col gap-10 animate-fade-in">
-      {/* Greeting Section */}
-      <section>
-        <h2 className="font-display text-4xl font-black tracking-tight text-slate-900 dark:text-white">
-          Hello, {user?.name?.split(' ')[0] ?? 'User'}
-        </h2>
-        <p className="mt-2 text-lg font-medium text-slate-500 dark:text-zinc-400">
-          Your pipeline is looking healthy. You have <span className="text-brand-600 font-bold">{active} active</span> leads to follow up on.
-        </p>
+    <div className="flex flex-col gap-8 animate-fade-in">
+      {/* Welcome header banner */}
+      <section className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div>
+          <h2 className="text-3xl font-bold tracking-tight text-white uppercase font-display">
+            Welcome back, {user?.name?.split(' ')[0] ?? 'User'}
+          </h2>
+          <p className="mt-1.5 text-sm text-slate-400">
+            Here is your sales pipeline overview for today.
+          </p>
+        </div>
+        <Link to="/leads">
+          <Button variant="primary" size="sm" icon={<Plus size={14} />}>
+            Manage Pipeline
+          </Button>
+        </Link>
       </section>
 
-      {/* KPI Stats Grid */}
-      <section aria-label="Key performance indicators">
-        <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
-          <StatCard 
-            label="Total Leads" 
-            value={leads.length} 
-            icon={Users} 
-            colorClass="bg-slate-100 text-slate-600 dark:bg-zinc-800 dark:text-zinc-400"
-            trend={{ value: '12%', positive: true }}
-          />
-          <StatCard 
-            label="Active Pipeline" 
-            value={active} 
-            icon={TrendingUp} 
-            colorClass="bg-blue-50 text-blue-600 dark:bg-blue-900/20 dark:text-blue-400"
-            trend={{ value: '5%', positive: true }}
-          />
-          <StatCard 
-            label="Leads Qualified" 
-            value={qualified} 
-            icon={CheckCircle2} 
-            colorClass="bg-emerald-50 text-emerald-600 dark:bg-emerald-900/20 dark:text-emerald-400"
-            trend={{ value: '8%', positive: true }}
-          />
-          <StatCard 
-            label="Deals Lost" 
-            value={lost} 
-            icon={XCircle} 
-            colorClass="bg-rose-50 text-rose-600 dark:bg-rose-900/20 dark:text-rose-400"
-            trend={{ value: '2%', positive: false }}
+      {totalLeads === 0 ? (
+        <div className="bg-obsidian-700 border border-white/[0.05] p-12 rounded-xl flex items-center justify-center">
+          <EmptyState
+            icon={<Users size={20} />}
+            title="Your Sales Pipeline is Empty"
+            description="Welcome to LeadFlow! Register your first lead to begin tracking your conversion rates and analytics."
+            action={{
+              label: 'Register First Lead',
+              onClick: () => { window.location.href = '/leads' },
+              icon: <Plus size={14} />,
+              variant: 'primary'
+            }}
           />
         </div>
-      </section>
+      ) : (
+        <>
+          {/* KPI grid panel */}
+          <section className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+            <Link to="/leads" className="obsidian-card p-6 flex flex-col justify-between group relative overflow-hidden">
+              <div className="flex items-center justify-between">
+                <div className="h-12 w-12 rounded-xl bg-accent/10 text-accent flex items-center justify-center">
+                  <Users size={22} />
+                </div>
+                <ArrowUpRight className="h-4 w-4 text-slate-500 group-hover:text-accent transition-colors" />
+              </div>
+              <div className="mt-6">
+                <span className="text-4xl font-bold font-mono tracking-tight text-white">{totalLeads}</span>
+                <p className="text-xs text-slate-400 font-semibold mt-1">Total Leads</p>
+              </div>
+            </Link>
 
-      {/* Placeholder for charts/recent activity */}
-      <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
-        <div className="clean-card flex aspect-video items-center justify-center lg:col-span-2">
-          <p className="text-sm font-medium text-slate-400">Pipeline Performance Chart</p>
-        </div>
-        <div className="clean-card flex items-center justify-center">
-          <p className="text-sm font-medium text-slate-400">Recent Activity Feed</p>
-        </div>
-      </div>
+            <Link to="/leads" className="obsidian-card p-6 flex flex-col justify-between group relative overflow-hidden">
+              <div className="flex items-center justify-between">
+                <div className="h-12 w-12 rounded-xl bg-amber-500/10 text-amber-500 flex items-center justify-center">
+                  <TrendingUp size={22} />
+                </div>
+                <ArrowUpRight className="h-4 w-4 text-slate-500 group-hover:text-amber-500 transition-colors" />
+              </div>
+              <div className="mt-6">
+                <span className="text-4xl font-bold font-mono tracking-tight text-white">{newThisWeek}</span>
+                <p className="text-xs text-slate-400 font-semibold mt-1">New This Week</p>
+              </div>
+            </Link>
+
+            <Link to="/leads?status=qualified" className="obsidian-card p-6 flex flex-col justify-between group relative overflow-hidden">
+              <div className="flex items-center justify-between">
+                <div className="h-12 w-12 rounded-xl bg-emerald-500/10 text-emerald-500 flex items-center justify-center">
+                  <CheckCircle2 size={22} />
+                </div>
+                <ArrowUpRight className="h-4 w-4 text-slate-500 group-hover:text-emerald-500 transition-colors" />
+              </div>
+              <div className="mt-6">
+                <span className="text-4xl font-bold font-mono tracking-tight text-white">{qualifiedRate}%</span>
+                <p className="text-xs text-slate-400 font-semibold mt-1">Qualified Rate</p>
+              </div>
+            </Link>
+
+            <Link to="/leads?status=lost" className="obsidian-card p-6 flex flex-col justify-between group relative overflow-hidden">
+              <div className="flex items-center justify-between">
+                <div className="h-12 w-12 rounded-xl bg-rose-500/10 text-rose-500 flex items-center justify-center">
+                  <XCircle size={22} />
+                </div>
+                <ArrowUpRight className="h-4 w-4 text-slate-500 group-hover:text-rose-500 transition-colors" />
+              </div>
+              <div className="mt-6">
+                <span className="text-4xl font-bold font-mono tracking-tight text-white">{lostRate}%</span>
+                <p className="text-xs text-slate-400 font-semibold mt-1">Lost Rate</p>
+              </div>
+            </Link>
+          </section>
+
+          {/* Quick analysis charts segment */}
+          <section className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <div className="obsidian-card p-6 lg:col-span-2 flex flex-col justify-between">
+              <div>
+                <h3 className="text-base font-bold text-white uppercase tracking-wider">Performance Index</h3>
+                <p className="text-xs text-slate-400 mt-1">Status distributions inside active stages</p>
+              </div>
+              <div className="h-40 flex items-end justify-around gap-2 mt-6">
+                <div className="flex flex-col items-center gap-2 w-12">
+                  <div className="w-full bg-accent/20 rounded-t-md hover:bg-accent/30 transition-all" style={{ height: `${totalLeads ? Math.max(10, Math.min(100, (leads.filter(l => l.status === 'new').length / totalLeads) * 100)) : 10}%` }} />
+                  <span className="text-[10px] text-slate-400 uppercase font-bold">New</span>
+                </div>
+                <div className="flex flex-col items-center gap-2 w-12">
+                  <div className="w-full bg-amber-500/20 rounded-t-md hover:bg-amber-500/30 transition-all" style={{ height: `${totalLeads ? Math.max(10, Math.min(100, (leads.filter(l => l.status === 'contacted').length / totalLeads) * 100)) : 10}%` }} />
+                  <span className="text-[10px] text-slate-400 uppercase font-bold">Contact</span>
+                </div>
+                <div className="flex flex-col items-center gap-2 w-12">
+                  <div className="w-full bg-emerald-500/20 rounded-t-md hover:bg-emerald-500/30 transition-all" style={{ height: `${totalLeads ? Math.max(10, Math.min(100, qualifiedRate)) : 10}%` }} />
+                  <span className="text-[10px] text-slate-400 uppercase font-bold">Qual</span>
+                </div>
+                <div className="flex flex-col items-center gap-2 w-12">
+                  <div className="w-full bg-rose-500/20 rounded-t-md hover:bg-rose-500/30 transition-all" style={{ height: `${totalLeads ? Math.max(10, Math.min(100, lostRate)) : 10}%` }} />
+                  <span className="text-[10px] text-slate-400 uppercase font-bold">Lost</span>
+                </div>
+              </div>
+            </div>
+            
+            <div className="obsidian-card p-6 flex flex-col justify-between">
+              <div>
+                <h3 className="text-base font-bold text-white uppercase tracking-wider">Source Analysis</h3>
+                <p className="text-xs text-slate-400 mt-1">Lead acquisition channels comparison</p>
+              </div>
+              <div className="flex flex-col gap-3 mt-6">
+                <div>
+                  <div className="flex justify-between text-xs text-slate-400 font-semibold mb-1">
+                    <span>Website</span>
+                    <span>{leads.filter(l => l.source === 'website').length}</span>
+                  </div>
+                  <div className="h-1.5 w-full bg-slate-800 rounded-full overflow-hidden">
+                    <div className="h-full bg-accent rounded-full" style={{ width: `${totalLeads ? (leads.filter(l => l.source === 'website').length / totalLeads) * 100 : 0}%` }} />
+                  </div>
+                </div>
+                <div>
+                  <div className="flex justify-between text-xs text-slate-400 font-semibold mb-1">
+                    <span>Instagram</span>
+                    <span>{leads.filter(l => l.source === 'instagram').length}</span>
+                  </div>
+                  <div className="h-1.5 w-full bg-slate-800 rounded-full overflow-hidden">
+                    <div className="h-full bg-pink-500 rounded-full" style={{ width: `${totalLeads ? (leads.filter(l => l.source === 'instagram').length / totalLeads) * 100 : 0}%` }} />
+                  </div>
+                </div>
+                <div>
+                  <div className="flex justify-between text-xs text-slate-400 font-semibold mb-1">
+                    <span>Referral</span>
+                    <span>{leads.filter(l => l.source === 'referral').length}</span>
+                  </div>
+                  <div className="h-1.5 w-full bg-slate-800 rounded-full overflow-hidden">
+                    <div className="h-full bg-emerald-500 rounded-full" style={{ width: `${totalLeads ? (leads.filter(l => l.source === 'referral').length / totalLeads) * 100 : 0}%` }} />
+                  </div>
+                </div>
+              </div>
+            </div>
+          </section>
+        </>
+      )}
     </div>
   )
 }
+
+export default DashboardPage

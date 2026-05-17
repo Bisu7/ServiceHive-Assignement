@@ -1,58 +1,143 @@
 import { create } from 'zustand'
-import type { ILead, LeadFilters, PaginatedResponse } from '@leadflow/shared'
+import type { ILead, LeadFilters, CreateLeadPayload, UpdateLeadPayload } from '@leadflow/shared'
+import * as leadsApi from '@/api/leads.api'
 
 interface LeadsState {
   leads: ILead[]
-  selectedLead: ILead | null
-  filters: LeadFilters
-  pagination: PaginatedResponse<ILead>['pagination'] | null
+  total: number
+  page: number
+  totalPages: number
   isLoading: boolean
-  /** Replaces the leads list with a new paginated response */
-  setLeads: (response: PaginatedResponse<ILead>) => void
-  /** Sets the currently viewed/edited lead */
+  error: string | null
+  filters: LeadFilters
+  selectedLead: ILead | null
+  
   setSelectedLead: (lead: ILead | null) => void
-  /** Updates filter criteria — resets page to 1 on any change */
-  setFilters: (filters: Partial<LeadFilters>) => void
-  /** Replaces a single lead in the list by ID (optimistic update support) */
-  upsertLead: (lead: ILead) => void
-  /** Removes a lead from the list by ID */
-  removeLead: (id: string) => void
-  setLoading: (loading: boolean) => void
+  fetchLeads: (query?: Partial<LeadFilters>) => Promise<void>
+  setFilter: <K extends keyof LeadFilters>(key: K, value: LeadFilters[K]) => Promise<void>
+  clearFilters: () => Promise<void>
+  createLead: (data: CreateLeadPayload) => Promise<void>
+  updateLead: (id: string, data: UpdateLeadPayload) => Promise<void>
+  deleteLead: (id: string) => Promise<void>
 }
 
-/**
- * Zustand store for the leads list, filters, and pagination state.
- * Does not persist — data is always fresh from the server.
- */
-export const useLeadsStore = create<LeadsState>()((set) => ({
+export const useLeadsStore = create<LeadsState>()((set, get) => ({
   leads: [],
-  selectedLead: null,
-  filters: { page: 1, limit: 20 },
-  pagination: null,
+  total: 0,
+  page: 1,
+  totalPages: 1,
   isLoading: false,
-
-  setLeads: (response) =>
-    set({ leads: response.data, pagination: response.pagination, isLoading: false }),
+  error: null,
+  filters: {
+    page: 1,
+    limit: 10,
+    search: undefined,
+    status: undefined,
+    source: undefined,
+    sortBy: 'latest',
+  },
+  selectedLead: null,
 
   setSelectedLead: (lead) => set({ selectedLead: lead }),
 
-  setFilters: (partial) =>
-    set((state) => ({
-      filters: { ...state.filters, ...partial, page: 1 },
-    })),
+  fetchLeads: async (query) => {
+    set({ isLoading: true, error: null })
+    const currentFilters = get().filters
+    const mergedFilters = {
+      ...currentFilters,
+      ...query,
+    }
 
-  upsertLead: (lead) =>
-    set((state) => {
-      const exists = state.leads.some((l) => l._id === lead._id)
-      return {
-        leads: exists
-          ? state.leads.map((l) => (l._id === lead._id ? lead : l))
-          : [lead, ...state.leads],
+    // Standardize empty options
+    Object.keys(mergedFilters).forEach((key) => {
+      const k = key as keyof LeadFilters
+      if (mergedFilters[k] === '') {
+        mergedFilters[k] = undefined as any
       }
-    }),
+    })
 
-  removeLead: (id) =>
-    set((state) => ({ leads: state.leads.filter((l) => l._id !== id) })),
+    try {
+      const response = await leadsApi.getLeads(mergedFilters)
+      set({
+        leads: response.data,
+        total: response.pagination.total,
+        page: response.pagination.page,
+        totalPages: response.pagination.totalPages,
+        filters: mergedFilters,
+        isLoading: false,
+      })
+    } catch (err: any) {
+      set({
+        error: err.message || 'Failed to fetch leads',
+        isLoading: false,
+      })
+    }
+  },
 
-  setLoading: (loading) => set({ isLoading: loading }),
+  setFilter: async (key, value) => {
+    const newFilters = {
+      ...get().filters,
+      [key]: value === '' ? undefined : value,
+      page: key === 'page' ? (value as number) : 1,
+    }
+    set({ filters: newFilters })
+    await get().fetchLeads(newFilters)
+  },
+
+  clearFilters: async () => {
+    const defaultFilters: LeadFilters = {
+      page: 1,
+      limit: 10,
+      search: undefined,
+      status: undefined,
+      source: undefined,
+      sortBy: 'latest',
+    }
+    set({ filters: defaultFilters })
+    await get().fetchLeads(defaultFilters)
+  },
+
+  createLead: async (data) => {
+    set({ isLoading: true, error: null })
+    try {
+      await leadsApi.createLead(data)
+      await get().fetchLeads()
+    } catch (err: any) {
+      set({ error: err.message || 'Failed to create lead', isLoading: false })
+      throw err
+    }
+  },
+
+  updateLead: async (id, data) => {
+    const originalLeads = get().leads
+    // Optimistic Update
+    set((state) => ({
+      leads: state.leads.map((l) => (l._id === id ? ({ ...l, ...data } as any) : l)),
+    }))
+    try {
+      const updated = await leadsApi.updateLead(id, data)
+      set((state) => ({
+        leads: state.leads.map((l) => (l._id === id ? updated : l)),
+        selectedLead: state.selectedLead?._id === id ? updated : state.selectedLead,
+      }))
+    } catch (err: any) {
+      set({ leads: originalLeads })
+      throw err
+    }
+  },
+
+  deleteLead: async (id) => {
+    const originalLeads = get().leads
+    const newLeads = originalLeads.filter((l) => l._id !== id)
+    set({ leads: newLeads })
+    try {
+      await leadsApi.deleteLead(id)
+      if (newLeads.length === 0) {
+        await get().fetchLeads()
+      }
+    } catch (err: any) {
+      set({ leads: originalLeads })
+      throw err
+    }
+  },
 }))

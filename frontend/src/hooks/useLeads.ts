@@ -1,59 +1,40 @@
-import { useCallback, useEffect } from 'react'
 import { useLeadsStore } from '@/store/leadsStore'
-import * as leadsApi from '@/api/leads.api'
-import type { CreateLeadPayload, UpdateLeadPayload } from '@leadflow/shared'
-import toast from 'react-hot-toast'
+import type { CreateLeadPayload, UpdateLeadPayload, LeadFilters } from '@leadflow/shared'
 
 /**
- * Hook that bridges the leads store with the leads API.
- * Provides data-fetching actions with built-in loading state and error toasts.
+ * React hook that bridges store states and CRUD actions for Leads,
+ * keeping page controllers and details sync-aligned.
  */
 export function useLeads() {
-  const { leads, filters, pagination, isLoading, setLeads, setFilters, upsertLead, removeLead, setLoading } =
-    useLeadsStore()
+  const leads = useLeadsStore((state) => state.leads)
+  const total = useLeadsStore((state) => state.total)
+  const page = useLeadsStore((state) => state.page)
+  const totalPages = useLeadsStore((state) => state.totalPages)
+  const isLoading = useLeadsStore((state) => state.isLoading)
+  const error = useLeadsStore((state) => state.error)
+  const filters = useLeadsStore((state) => state.filters)
 
-  const fetchLeads = useCallback(async (): Promise<void> => {
-    setLoading(true)
-    try {
-      const response = await leadsApi.getLeads(filters)
-      setLeads(response)
-    } catch {
-      toast.error('Failed to load leads')
-      setLoading(false)
-    }
-  }, [filters, setLeads, setLoading])
+  const fetchLeads = useLeadsStore((state) => state.fetchLeads)
+  const setFilter = useLeadsStore((state) => state.setFilter)
+  const clearFilters = useLeadsStore((state) => state.clearFilters)
+  const createLead = useLeadsStore((state) => state.createLead)
+  const updateLead = useLeadsStore((state) => state.updateLead)
+  const deleteLead = useLeadsStore((state) => state.deleteLead)
 
-  // Refetch whenever filters change
-  useEffect(() => {
-    void fetchLeads()
-  }, [fetchLeads])
-
-  const createLead = useCallback(
-    async (payload: CreateLeadPayload): Promise<void> => {
-      const lead = await leadsApi.createLead(payload)
-      upsertLead(lead)
-      toast.success('Lead created successfully')
-    },
-    [upsertLead]
-  )
-
-  const updateLead = useCallback(
-    async (id: string, payload: UpdateLeadPayload): Promise<void> => {
-      const lead = await leadsApi.updateLead(id, payload)
-      upsertLead(lead)
-      toast.success('Lead updated successfully')
-    },
-    [upsertLead]
-  )
-
-  const deleteLead = useCallback(
-    async (id: string): Promise<void> => {
-      await leadsApi.deleteLead(id)
-      removeLead(id)
-      toast.success('Lead deleted')
-    },
-    [removeLead]
-  )
-
-  return { leads, filters, pagination, isLoading, setFilters, createLead, updateLead, deleteLead, refetch: fetchLeads }
+  return {
+    leads,
+    total,
+    page,
+    totalPages,
+    isLoading,
+    error,
+    filters,
+    fetchLeads,
+    setFilter,
+    clearFilters,
+    createLead,
+    updateLead,
+    deleteLead,
+  }
 }
+export default useLeads

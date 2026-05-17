@@ -1,21 +1,20 @@
 import { useEffect, useState } from 'react'
 
 /**
- * Debounces a value — useful for search inputs to avoid firing an API request
- * on every keystroke.
- *
- * @param value - The value to debounce
- * @param delay - Milliseconds to wait after the last change (default 400ms)
+ * Custom hook to debounce rapid value updates (such as form inputs).
+ * Standard debounce implementation with useEffect cleanup.
  */
-export function useDebounce<T>(value: T, delay = 400): T {
+export function useDebounce<T>(value: T, delay: number): T {
   const [debouncedValue, setDebouncedValue] = useState<T>(value)
 
   useEffect(() => {
-    const timer = setTimeout(() => {
+    const handler = setTimeout(() => {
       setDebouncedValue(value)
     }, delay)
 
-    return () => clearTimeout(timer)
+    return () => {
+      clearTimeout(handler)
+    }
   }, [value, delay])
 
   return debouncedValue

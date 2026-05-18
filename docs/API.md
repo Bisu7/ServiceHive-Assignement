@@ -1,10 +1,10 @@
-# LeadFlow REST API Documentation
+# GigFlow REST API Documentation
 
-This document describes all API endpoints exposed by the LeadFlow backend service. All requests must use the JSON format for body data. When authenticated, requests must attach the JSON Web Token as a bearer token in the `Authorization` header: `Authorization: Bearer <your-jwt-token>`.
+This document describes all API endpoints exposed by the GigFlow backend service. All requests must use the JSON format for body data. When authenticated, requests must attach the JSON Web Token as a bearer token in the `Authorization` header: `Authorization: Bearer <your-jwt-token>`.
 
 ---
 
-## 🔒 Authentication Module
+## Authentication Module
 
 ### 1. Register User
 Creates a new user profile inside the platform database (default role: `sales`).
@@ -126,7 +126,7 @@ Invalidates user sessions and clears server access credentials.
 
 ---
 
-## 📈 Leads Module
+## Leads Module
 
 ### 1. List Leads
 Retrieves a paginated, sorted, and filtered list of active sales pipeline leads.
@@ -175,11 +175,11 @@ Retrieves a paginated, sorted, and filtered list of active sales pipeline leads.
     ```
 
 ### 2. Export Leads to CSV
-Generates a downloadable raw CSV binary stream of matching filtered lead records (page and limit boundaries are excluded).
+Generates a downloadable CSV stream of matching filtered lead records.
 
 *   **Method**: `GET`
 *   **Path**: `/api/leads/export`
-*   **Authentication Required**: Yes (`admin` or `sales` with export rights)
+*   **Authentication Required**: Yes (admin or sales with export rights)
 *   **Query String Validation**:
     ```typescript
     interface ExportQuery {
@@ -188,7 +188,7 @@ Generates a downloadable raw CSV binary stream of matching filtered lead records
       search?: string;
     }
     ```
-*   **Response Shape (200 OK)**: File attachment stream (`text/csv` binary payload containing Name, Email, Status, Source, Notes, Creator, and Registered Date columns).
+*   **Response Shape (200 OK)**: File attachment stream (text/csv payload containing Name, Email, Status, Source, Notes, Creator, and Registered Date columns).
 *   **Example curl**:
     ```bash
     curl -X GET "http://localhost:5000/api/leads/export?status=new" \
@@ -296,7 +296,7 @@ Removes a lead permanently from the pipeline. Administrators are allowed to dele
 
 *   **Method**: `DELETE`
 *   **Path**: `/api/leads/:id`
-*   **Authentication Required**: Yes (`admin` role OR owner/creator of the lead record)
+*   **Authentication Required**: Yes (admin role OR owner/creator of the lead record)
 *   **Response Shape (200 OK)**:
     ```json
     {
@@ -313,10 +313,10 @@ Removes a lead permanently from the pipeline. Administrators are allowed to dele
 
 ---
 
-## 🏥 Health Check Module
+## Health Check Module
 
 ### 1. Health Check
-Fetches active runtime parameters. Requires no database locks or authentication, resolving within 200ms.
+Fetches active runtime parameters. Requires no database locks or authentication.
 
 *   **Method**: `GET`
 *   **Path**: `/api/health`

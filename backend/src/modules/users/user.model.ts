@@ -53,9 +53,7 @@ const userSchema = new Schema<IUserDocument>(
   }
 )
 
-/**
- * Hash password before saving if it has been modified.
- */
+// Hash password before saving if modified.
 userSchema.pre('save', async function (next) {
   const user = this
   if (!user.isModified('password')) return next()
@@ -70,7 +68,7 @@ userSchema.pre('save', async function (next) {
 })
 
 userSchema.methods.comparePassword = async function (candidate: string): Promise<boolean> {
-  // Cast this to any to access the password field which might be hidden by select: false
+  // Cast to any to access the password field.
   const user = this as any
   return bcrypt.compare(candidate, user.password || '')
 }

@@ -5,10 +5,7 @@ import type { LoginPayload, RegisterPayload } from '@leadflow/shared'
 import toast from 'react-hot-toast'
 import { useNavigate } from 'react-router-dom'
 
-/**
- * Hook encapsulating all authentication actions.
- * Connects the components directly to the store and API endpoints.
- */
+// Hook encapsulating all authentication actions.
 export function useAuth() {
   const user = useAuthStore((state) => state.user)
   const token = useAuthStore((state) => state.token)

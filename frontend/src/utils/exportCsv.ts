@@ -1,6 +1,4 @@
-/**
- * Triggers a browser download of a CSV file using a temporary anchor element.
- */
+// Triggers a browser download of a CSV file.
 export function exportCsvBlob(blob: Blob, filename: string): void {
   const url = URL.createObjectURL(blob)
   const link = document.createElement('a')

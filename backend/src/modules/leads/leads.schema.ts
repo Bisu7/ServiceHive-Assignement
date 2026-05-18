@@ -7,7 +7,7 @@ const objectIdSchema = z.string().regex(objectIdRegex, {
   message: 'Invalid ObjectId format',
 })
 
-/** Schema for creating a new lead */
+// Schema for creating a new lead
 export const createLeadSchema = z.object({
   name: z
     .string()
@@ -27,7 +27,7 @@ export const createLeadSchema = z.object({
   assignedTo: objectIdSchema.optional(),
 })
 
-/** Schema for partial lead updates — all fields optional, at least one field required */
+// Schema for partial lead updates
 export const updateLeadSchema = createLeadSchema.partial().refine(
   (data) => Object.keys(data).length > 0,
   {
@@ -35,7 +35,7 @@ export const updateLeadSchema = createLeadSchema.partial().refine(
   }
 )
 
-/** Schema for query-string filters when listing leads */
+// Schema for query-string filters
 export const leadQuerySchema = z.object({
   page: z.coerce.number().int().min(1).default(1),
   limit: z.coerce.number().int().min(1).max(100).default(10),

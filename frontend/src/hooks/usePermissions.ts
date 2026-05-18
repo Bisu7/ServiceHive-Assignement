@@ -1,9 +1,7 @@
 import { useAuthStore } from '@/store/authStore'
 import { UserRole } from '@leadflow/shared'
 
-/**
- * Hook to access and compute user permissions reactively from the authStore.
- */
+// Hook to access and compute user permissions from the authStore.
 export function usePermissions() {
   const user = useAuthStore((state) => state.user)
   const role = user?.role

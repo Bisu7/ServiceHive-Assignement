@@ -4,18 +4,7 @@ import { ApiError } from '../../utils/ApiError'
 import type { CreateLeadInput, UpdateLeadInput, LeadQuery } from './leads.schema'
 import { LeadStatus, LeadSource, UserRole } from '@leadflow/shared'
 
-/**
- * Helper to construct the dynamic MongoDB query filter based on request query parameters
- * and User Role-Based Access Control (RBAC) rules.
- * 
- * 1. Checks if status parameter is provided and assigns it directly to query.status
- * 2. Checks if source parameter is provided and assigns it directly to query.source
- * 3. Checks if search parameter is provided and creates a case-insensitive regex pattern
- *    to partial-match either the "name" or the "email" field using $or operator.
- * 4. Checks the user's role:
- *    - If the user's role is 'sales', we add a createdBy restriction to filter for their own leads.
- *    - If the user's role is 'admin', we do not restrict by createdBy (granting view of all leads).
- */
+// Helper to construct dynamic MongoDB filter based on query and RBAC.
 function buildLeadsFilter(
   query: Partial<LeadQuery>,
   userId: string,
@@ -40,7 +29,7 @@ function buildLeadsFilter(
     ]
   }
 
-  // RBAC Filter Rules
+  // RBAC filter rules
   if (userRole === UserRole.Sales) {
     filter.createdBy = new mongoose.Types.ObjectId(userId)
   }
@@ -48,9 +37,7 @@ function buildLeadsFilter(
   return filter
 }
 
-/**
- * Creates a new lead in the system.
- */
+// Creates a new lead.
 export async function createLead(data: CreateLeadInput, createdBy: string): Promise<ILeadDocument> {
   if (!mongoose.Types.ObjectId.isValid(createdBy)) {
     throw ApiError.badRequest('Invalid creator user ID format')
@@ -69,16 +56,7 @@ export async function createLead(data: CreateLeadInput, createdBy: string): Prom
   return newLead
 }
 
-/**
- * Explains filter-building logic step by step.
- * 
- * Step 1: Validate input parameters and sanitize query criteria.
- * Step 2: Build the dynamic mongoose query filter using `buildLeadsFilter`.
- * Step 3: Determine sort sequence based on `sortBy` parameter ('latest' -> newest first, 'oldest' -> oldest first).
- * Step 4: Apply Skip/Limit offset pagination boundaries using standard formulas.
- * Step 5: Run parallel find and count queries using `Promise.all` for optimal throughput.
- * Step 6: Return result set with standardized pagination metadata envelopes.
- */
+// Fetches leads with dynamic filters, sorting, and pagination.
 export async function getLeads(
   query: LeadQuery,
   userId: string,
@@ -91,7 +69,7 @@ export async function getLeads(
   const { page, limit, sortBy } = query
   const filter = buildLeadsFilter(query, userId, userRole)
 
-  // Sort parameters configuration
+  // Sort configuration
   const sortOrder: Record<string, 1 | -1> = {
     createdAt: sortBy === 'latest' ? -1 : 1
   }
@@ -118,10 +96,7 @@ export async function getLeads(
   }
 }
 
-/**
- * Resolves a lead by its Mongo ID.
- * Enforces ownership checks on Sales accounts.
- */
+// Resolves a lead by ID with ownership checks.
 export async function getLeadById(
   id: string,
   userId: string,
@@ -140,7 +115,7 @@ export async function getLeadById(
     throw ApiError.notFound(`Lead with id '${id}' not found`)
   }
 
-  // RBAC Authorization check
+  // RBAC checks
   if (userRole === UserRole.Sales && lead.createdBy.toString() !== userId) {
     throw ApiError.forbidden('You do not have permission to access this lead')
   }
@@ -148,10 +123,7 @@ export async function getLeadById(
   return lead
 }
 
-/**
- * Updates an existing lead by applying partial changes.
- * Enforces identical ownership restrictions to getLeadById.
- */
+// Updates an existing lead by applying partial changes.
 export async function updateLead(
   id: string,
   data: UpdateLeadInput,
@@ -175,7 +147,7 @@ export async function updateLead(
     throw ApiError.notFound(`Lead with id '${id}' not found`)
   }
 
-  // RBAC Authorization check
+  // RBAC checks
   if (userRole === UserRole.Sales && lead.createdBy.toString() !== userId) {
     throw ApiError.forbidden('You do not have permission to update this lead')
   }
@@ -196,10 +168,7 @@ export async function updateLead(
   return updatedLead
 }
 
-/**
- * Deletes a lead by its Mongo ID.
- * Admins can delete any lead. Sales users can only delete their own.
- */
+// Deletes a lead by ID with ownership checks.
 export async function deleteLead(
   id: string,
   userId: string,
@@ -218,7 +187,7 @@ export async function deleteLead(
     throw ApiError.notFound(`Lead with id '${id}' not found`)
   }
 
-  // RBAC Authorization check
+  // RBAC checks
   if (userRole === UserRole.Sales) {
     if (lead.createdBy.toString() !== userId) {
       throw ApiError.forbidden('You do not have permission to delete this lead')
@@ -230,10 +199,7 @@ export async function deleteLead(
   await LeadModel.findByIdAndDelete(id)
 }
 
-/**
- * Fetches all matched records (capped at 10,000 maximum) and exports them in CSV format.
- * Commas, double quotes, and newlines in fields are correctly escaped.
- */
+// Fetches matched records and exports as CSV.
 export async function exportLeadsAsCsv(
   query: Omit<LeadQuery, 'page' | 'limit'>,
   userId: string,
@@ -245,7 +211,7 @@ export async function exportLeadsAsCsv(
 
   const filter = buildLeadsFilter(query, userId, userRole)
 
-  // Fetch up to 10,000 records lean for performance
+  // Fetch up to 10k records
   const leads = await LeadModel.find(filter)
     .sort({ createdAt: -1 })
     .limit(10000)
@@ -253,7 +219,7 @@ export async function exportLeadsAsCsv(
 
   const csvRows = ['Name,Email,Status,Source,Created At']
 
-  // CSV Field Escaping Helper Function
+  // CSV Field Escaper
   const escapeCsvField = (val: unknown): string => {
     if (val === null || val === undefined) return ''
     const str = String(val).trim()

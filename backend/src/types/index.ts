@@ -1,7 +1,4 @@
-/**
- * Re-exports of @leadflow/shared types used server-side.
- * Import from here within the server package for cleaner paths.
- */
+// Re-exports of @leadflow/shared types used server-side.
 export type {
   ILead,
   IUser,

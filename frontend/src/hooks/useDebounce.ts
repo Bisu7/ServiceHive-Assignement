@@ -1,9 +1,6 @@
 import { useEffect, useState } from 'react'
 
-/**
- * Custom hook to debounce rapid value updates (such as form inputs).
- * Standard debounce implementation with useEffect cleanup.
- */
+// Custom hook to debounce rapid value updates.
 export function useDebounce<T>(value: T, delay: number): T {
   const [debouncedValue, setDebouncedValue] = useState<T>(value)
 

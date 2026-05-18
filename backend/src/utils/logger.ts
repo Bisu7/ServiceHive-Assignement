@@ -1,8 +1,4 @@
-/**
- * Structured logger wrapping console methods.
- * In production, replace this with a proper library (e.g., Winston or Pino)
- * while keeping the same interface so call sites don't change.
- */
+// Structured logger wrapping console methods.
 
 type LogLevel = 'info' | 'warn' | 'error' | 'debug'
 

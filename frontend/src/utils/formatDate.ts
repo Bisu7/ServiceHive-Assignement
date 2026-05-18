@@ -1,7 +1,4 @@
-/**
- * Formats an ISO 8601 date string into a human-readable format.
- * Returns 'N/A' for null/undefined values to avoid blank UI cells.
- */
+// Formats date into a human-readable format.
 
 const DATE_FORMATTER = new Intl.DateTimeFormat('en-US', {
   year: 'numeric',
@@ -27,7 +24,7 @@ export function formatDateTime(isoString: string | undefined | null): string {
   return DATETIME_FORMATTER.format(new Date(isoString))
 }
 
-/** Formats a number as USD currency */
+// Formats a number as USD currency
 export function formatCurrency(value: number | undefined | null): string {
   if (value == null) return '—'
   return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 }).format(value)

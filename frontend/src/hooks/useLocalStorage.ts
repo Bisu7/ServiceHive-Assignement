@@ -1,12 +1,6 @@
 import { useState, useCallback } from 'react'
 
-/**
- * Syncs state to localStorage with automatic JSON serialisation.
- * Falls back gracefully if localStorage is unavailable (e.g., in private browsing).
- *
- * @param key - localStorage key
- * @param initialValue - default value if key is not found
- */
+// Custom hook to sync state with localStorage.
 export function useLocalStorage<T>(key: string, initialValue: T): [T, (value: T) => void] {
   const [storedValue, setStoredValue] = useState<T>(() => {
     try {
@@ -23,7 +17,7 @@ export function useLocalStorage<T>(key: string, initialValue: T): [T, (value: T)
         setStoredValue(value)
         window.localStorage.setItem(key, JSON.stringify(value))
       } catch {
-        // Silently ignore write errors (e.g., storage quota exceeded)
+        // Ignore write errors (e.g. storage quota exceeded)
       }
     },
     [key]

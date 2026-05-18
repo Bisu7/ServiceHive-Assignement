@@ -6,7 +6,7 @@ import { createLeadSchema, updateLeadSchema, leadQuerySchema } from './leads.sch
 
 const router: Router = Router()
 
-/** All leads routes require authentication */
+// All leads routes require authentication
 router.use(protect)
 
 // GET leads and export (GET routes must use query string validation)

@@ -21,7 +21,7 @@ export function DashboardPage() {
 
   useEffect(() => {
     // Fetch a large limit on dashboard to accurately compute all KPI statistics
-    fetchLeads({ limit: 1000, page: 1 })
+    fetchLeads({ limit: 100, page: 1 })
   }, [fetchLeads])
 
   // Derive all KPIs

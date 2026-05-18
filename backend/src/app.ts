@@ -13,7 +13,7 @@ const app: Application = express()
 app.use(helmet())
 app.use(
   cors({
-    origin: env.CLIENT_ORIGIN,
+    origin: env.CLIENT_ORIGIN.split(',').map((o) => o.trim()),
     credentials: true,
   })
 )

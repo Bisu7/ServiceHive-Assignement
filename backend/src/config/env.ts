@@ -11,7 +11,7 @@ const envSchema = z.object({
   JWT_EXPIRES_IN: z.string().default('7d'),
   BCRYPT_SALT_ROUNDS: z.string().transform(Number).default('12'),
   NODE_ENV: z.enum(['development', 'production', 'test']).default('development'),
-  CLIENT_ORIGIN: z.string().url(),
+  CLIENT_ORIGIN: z.string(),
 })
 
 const result = envSchema.safeParse(process.env)

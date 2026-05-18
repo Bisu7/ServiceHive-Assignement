@@ -11,7 +11,7 @@ export function Sidebar() {
   const isAdmin = user?.role === 'admin'
 
   const navItems = [
-    { to: '/', label: 'Dashboard', icon: LayoutDashboard, end: true },
+    { to: '/dashboard', label: 'Dashboard', icon: LayoutDashboard, end: true },
     { to: '/leads', label: 'Leads', icon: Users },
     ...(isAdmin ? [{ to: '/users', label: 'Users', icon: UserCheck }] : []),
   ]

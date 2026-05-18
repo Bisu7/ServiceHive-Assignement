@@ -3,17 +3,18 @@
   "version": "1.0.0",
   "private": true,
   "description": "Shared TypeScript types and interfaces for the LeadFlow platform",
-  "main": "./dist/index.js",
-  "types": "./dist/index.d.ts",
+  "main": "./dist/cjs/index.js",
+  "module": "./dist/esm/index.js",
+  "types": "./dist/esm/index.d.ts",
   "exports": {
     ".": {
-      "import": "./dist/index.js",
-      "require": "./dist/index.cjs",
-      "types": "./dist/index.d.ts"
+      "import": "./dist/esm/index.js",
+      "require": "./dist/cjs/index.js",
+      "types": "./dist/esm/index.d.ts"
     }
   },
   "scripts": {
-    "build": "tsc --project tsconfig.json",
+    "build": "tsc --project tsconfig.json --module ESNext --outDir dist/esm && tsc --project tsconfig.json --module CommonJS --outDir dist/cjs",
     "dev": "tsc --project tsconfig.json --watch",
     "lint": "eslint src --ext .ts",
     "type-check": "tsc --noEmit"

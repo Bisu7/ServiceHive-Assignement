@@ -188,7 +188,7 @@ The database seed command registers two default team accounts with secure bcrypt
 ## API Documentation
 
 A comprehensive list of REST endpoints, input payload models, response JSON structures, error mappings, and cURL commands is located in:
-👉 **[docs/API.md](file:///c:/Users/biswa/OneDrive/Desktop/ServiceHive-Assignement/docs/API.md)**
+**[docs/API.md](file:///c:/Users/biswa/OneDrive/Desktop/ServiceHive-Assignement/docs/API.md)**
 
 ---
 
@@ -201,20 +201,6 @@ A comprehensive list of REST endpoints, input payload models, response JSON stru
 
 ---
 
-## Commit Convention
 
-This project follows Conventional Commits:
-*   `feat`: a new feature addition.
-*   `fix`: a bug repair.
-*   `refactor`: code adjustments modifying structure without logic impacts.
-*   `docs`: edits to documentation.
-*   `chore`: build adjustments, workspace dependency additions, or config edits.
-*   `style`: changes regarding cosmetic styling, formatting, or spacing.
 
-Example: `"feat(leads): add reactive URLSearchParams state syncing to table filters"`
 
----
-
-## License
-
-Distributed under the MIT License. See `LICENSE` for more information.

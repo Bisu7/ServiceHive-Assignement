@@ -14,8 +14,8 @@ export function LoginPage() {
         <div className="absolute top-1/4 left-1/4 -translate-x-1/2 -translate-y-1/2 w-[350px] h-[350px] bg-accent/10 blur-[130px] rounded-full pointer-events-none" />
         
         <div className="relative z-10 flex items-center gap-3">
-          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-accent text-white font-bold text-lg shadow-lg shadow-accent/20">LF</div>
-          <span className="font-bold uppercase tracking-wider text-white text-lg">LeadFlow</span>
+          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-accent text-white font-bold text-lg shadow-lg shadow-accent/20">GF</div>
+          <span className="font-bold uppercase tracking-wider text-white text-lg">GigFlow</span>
         </div>
 
         <div className="relative z-10 my-auto flex flex-col gap-6">
@@ -37,7 +37,7 @@ export function LoginPage() {
         </div>
 
         <div className="relative z-10 text-xs text-slate-500 font-mono">
-          &copy; {new Date().getFullYear()} LeadFlow CRM. All rights reserved.
+          &copy; {new Date().getFullYear()} GigFlow. All rights reserved.
         </div>
       </section>
 
@@ -47,7 +47,7 @@ export function LoginPage() {
         
         <div className="w-full max-w-md relative z-10">
           <div className="mb-8 flex flex-col items-center md:items-start gap-2">
-            <div className="md:hidden flex h-12 w-12 items-center justify-center rounded-xl bg-accent text-white font-bold text-lg shadow-lg mb-2">LF</div>
+            <div className="md:hidden flex h-12 w-12 items-center justify-center rounded-xl bg-accent text-white font-bold text-lg shadow-lg mb-2">GF</div>
             <h1 className="text-2xl font-bold tracking-wide text-white uppercase">Log In</h1>
             <p className="text-sm text-slate-400">Welcome back! Access your workspace.</p>
           </div>

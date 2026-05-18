@@ -46,7 +46,6 @@ export function RegisterForm({ onSubmit, loading = false }: RegisterFormProps) {
         {...register('name')}
         type="text"
         label="Full Name"
-        placeholder="John Doe"
         error={errors.name?.message}
         leftIcon={<User size={16} />}
       />
@@ -55,7 +54,6 @@ export function RegisterForm({ onSubmit, loading = false }: RegisterFormProps) {
         {...register('email')}
         type="email"
         label="Email Address"
-        placeholder="you@example.com"
         error={errors.email?.message}
         leftIcon={<Mail size={16} />}
       />
@@ -64,7 +62,6 @@ export function RegisterForm({ onSubmit, loading = false }: RegisterFormProps) {
         {...register('password')}
         type={showPassword ? 'text' : 'password'}
         label="Password"
-        placeholder="••••••••"
         error={errors.password?.message}
         leftIcon={<Lock size={16} />}
         rightIcon={

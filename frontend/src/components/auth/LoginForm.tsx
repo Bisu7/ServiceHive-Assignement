@@ -34,7 +34,6 @@ export function LoginForm({ onSubmit, loading = false }: LoginFormProps) {
         {...register('email')}
         type="email"
         label="Email Address"
-        placeholder="you@example.com"
         error={errors.email?.message}
         leftIcon={<Mail size={16} />}
       />
@@ -43,7 +42,6 @@ export function LoginForm({ onSubmit, loading = false }: LoginFormProps) {
         {...register('password')}
         type={showPassword ? 'text' : 'password'}
         label="Password"
-        placeholder="••••••••"
         error={errors.password?.message}
         leftIcon={<Lock size={16} />}
         rightIcon={

@@ -48,8 +48,8 @@ export function LeadForm({ mode, initialData, onSubmit, loading = false }: LeadF
 
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-4 w-full" noValidate>
-      <Input label="Name *" placeholder="Lead Name" error={errors.name?.message} {...register('name')} />
-      <Input label="Email Address *" type="email" placeholder="email@example.com" error={errors.email?.message} {...register('email')} />
+      <Input label="Name *" error={errors.name?.message} {...register('name')} />
+      <Input label="Email Address *" type="email" error={errors.email?.message} {...register('email')} />
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <Dropdown label="Status" value={status} onChange={(val) => setValue('status', val as LeadStatus)} options={statusOptions} error={errors.status?.message} />

@@ -10,7 +10,7 @@ const PAGE_TITLES: Record<string, string> = {
 }
 
 function getPageTitle(pathname: string): string {
-  return PAGE_TITLES[pathname] ?? PAGE_TITLES[`/${pathname.split('/')[1]}`] ?? 'LeadFlow'
+  return PAGE_TITLES[pathname] ?? PAGE_TITLES[`/${pathname.split('/')[1]}`] ?? 'GigFlow – Smart Leads Dashboard'
 }
 
 export function DashboardLayout() {

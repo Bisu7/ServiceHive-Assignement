@@ -26,8 +26,8 @@ export function Sidebar() {
     >
       <div className="h-16 flex items-center justify-between px-4 border-b border-white/[0.05]">
         <div className="flex items-center gap-2 overflow-hidden">
-          <div className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-lg bg-accent text-white font-bold">LF</div>
-          {!isCollapsed && <span className="font-semibold text-lg text-white truncate">LeadFlow</span>}
+          <div className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-lg bg-accent text-white font-bold">GF</div>
+          {!isCollapsed && <span className="font-semibold text-lg text-white truncate">GigFlow</span>}
         </div>
         {!isCollapsed && (
           <button onClick={toggleCollapsed} className="text-slate-400 hover:text-white hidden lg:flex p-1 rounded hover:bg-white/[0.04]" aria-label="Collapse sidebar">

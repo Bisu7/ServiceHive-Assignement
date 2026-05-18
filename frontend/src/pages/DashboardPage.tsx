@@ -70,7 +70,7 @@ export function DashboardPage() {
           <EmptyState
             icon={<Users size={20} />}
             title="Your Sales Pipeline is Empty"
-            description="Welcome to LeadFlow! Register your first lead to begin tracking your conversion rates and analytics."
+            description="Welcome to GigFlow! Register your first lead to begin tracking your conversion rates and analytics."
             action={{
               label: 'Register First Lead',
               onClick: () => { window.location.href = '/leads' },

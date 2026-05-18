@@ -41,7 +41,7 @@ export function useAuth() {
       try {
         const { token: newToken, user: newUser } = await authApi.register(payload)
         setAuth(newUser, newToken)
-        toast.success(`Welcome to LeadFlow, ${newUser.name}!`)
+        toast.success(`Welcome to GigFlow, ${newUser.name}!`)
         navigate('/dashboard')
       } catch (err: any) {
         toast.error(err.message || 'Registration failed. Email may already be in use.')

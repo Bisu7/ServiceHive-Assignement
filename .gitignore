@@ -47,7 +47,4 @@ coverage/
 # Docker volumes & secrets
 docker-volumes/
 
-# Temporary files
-*.tmp
-*.swp
-*.swo
+
